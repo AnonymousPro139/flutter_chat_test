@@ -6,9 +6,15 @@ types.Message firestoreToTextMessage(
 ) {
   final data = doc.data();
 
+  // final createdAt = data['createdAt'] is String
+  //     ? DateTime.parse(data['createdAt'])
+  //     : (data['createdAt'] as Timestamp).toDate();
+
   final createdAt = data['createdAt'] is String
       ? DateTime.parse(data['createdAt'])
-      : (data['createdAt'] as Timestamp).toDate();
+      : (data['createdAt'] == null
+            ? DateTime(0)
+            : (data['createdAt'] as Timestamp).toDate());
 
   return types.TextMessage(
     id: doc.id,

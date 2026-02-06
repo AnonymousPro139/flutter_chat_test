@@ -2,53 +2,17 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_chat_core/flutter_chat_core.dart';
-import 'package:test_firebase/firestore/utils.dart';
+import 'package:test_firebase/firestore/services/index.dart';
+import 'package:test_firebase/firestore/services/message/utils.dart';
 
-class FirestoreService {
-  static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-  void writeData(String collection, String docId, Map<String, dynamic> data) {
-    _firestore
-        .collection(collection)
-        .doc(docId)
-        .collection('messages')
-        .add(data);
-  }
-
-  void writeData2(String collection, String docId, Map<String, dynamic> data) {
-    // _firestore.collection(collection).doc(docId).set(data);
-    _firestore.collection(collection).add(data);
-  }
-
-  void writeMessage(String cId, Map<String, dynamic> data) {
-    _firestore.collection("channels").doc(cId).collection('messages').add(data);
-  }
-
-  void readData(String collection, String docId) async {
-    DocumentSnapshot snapshot = await _firestore
-        .collection(collection)
-        .doc(docId)
-        .get();
-
-    print("READ DATA::: ${snapshot.data()}");
-
-    // final messagesRef = FirebaseFirestore.instance
-    //     .collection('chats')
-    //     .doc(chatId)
-    //     .collection('messages')
-    //     .withConverter<Message>(
-    //       fromFirestore: (snap, _) => Message.fromDoc(snap),
-    //       toFirestore: (msg, _) => msg.toMap(),
-    //     );
-  }
-
+class MessageListeners extends FirestoreService {
   Stream listenChannels(
     String cId,
     String userId,
     String lastMessageTimestamp,
-    InMemoryChatController _chatController,
+    InMemoryChatController chatController,
   ) {
-    return FirebaseFirestore.instance
+    return firestore
         .collection('channels')
         .doc("123")
         .collection('messages')
@@ -78,7 +42,7 @@ class FirestoreService {
 
           print('msgs: $messages');
 
-          _chatController.setMessages(messages);
+          chatController.setMessages(messages);
         });
   }
 
@@ -86,7 +50,7 @@ class FirestoreService {
     required String path,
     required void Function(QuerySnapshot<Map<String, dynamic>> snapshot) onData,
   }) {
-    final collectionRef = FirebaseFirestore.instance
+    final collectionRef = firestore
         .collection(path)
         .orderBy('createdAt', descending: false)
         .startAfter([DateTime.now()]);

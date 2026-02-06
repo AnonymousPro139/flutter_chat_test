@@ -6,9 +6,9 @@ import 'package:flutter_chat_core/flutter_chat_core.dart';
 import 'package:flutter_chat_core/flutter_chat_core.dart' as types;
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:flyer_chat_text_message/flyer_chat_text_message.dart';
-
-import 'package:test_firebase/firestore/index.dart';
-import 'package:test_firebase/firestore/utils.dart';
+import 'package:test_firebase/firestore/services/message/functions.dart';
+import 'package:test_firebase/firestore/services/message/listeners.dart';
+import 'package:test_firebase/firestore/services/message/utils.dart';
 import 'package:test_firebase/widgets/replyPreview.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -77,7 +77,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void startListening() {
-    _subscription = FirestoreService().listenToCollection(
+    _subscription = MessageListeners().listenToCollection(
       path: 'channels/123/messages',
       onData: (snapshot) {
         final messages = snapshot.docs.map(firestoreToTextMessage).toList();
@@ -136,10 +136,8 @@ class _ChatScreenState extends State<ChatScreen> {
                 onMessageSend: (text) {
                   print('replying message to send: $_replyingTo');
 
-                  FirestoreService().writeMessage("123", {
+                  MessageFunctions().writeMessage("123", {
                     "message": text,
-                    // "createdAt": DateTime.now()
-                    //     .toUtc(), // .toUtc() toIso8601String()
                     "createdAt":
                         FieldValue.serverTimestamp(), //Always use server timestamps when writing messages: This avoids clock skew issues.
                     "senderId": "123",

@@ -1,8 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:test_firebase/firestore/index.dart';
+import 'package:test_firebase/firestore/services/message/functions.dart';
 import 'package:test_firebase/screens/Chat.dart';
+import 'package:test_firebase/screens/login.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -89,7 +90,7 @@ class _MyHomePageState extends State<MyHomePage> {
     //   "senderId": "user_1",
     // });
 
-    FirestoreService().writeMessage("123", {
+    MessageFunctions().writeMessage("123", {
       "message": "Hello from main.dart",
       "createdAt": DateTime.now().toIso8601String(),
       "senderId": "user_123",
@@ -97,7 +98,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _getDataFromFirestore() {
-    FirestoreService().readData("channels", "1");
+    MessageFunctions().readData("channels", "1");
   }
 
   void _navigateToChatScreen() {
@@ -105,6 +106,10 @@ class _MyHomePageState extends State<MyHomePage> {
       context,
       MaterialPageRoute(builder: (context) => ChatScreen()),
     );
+  }
+
+  void _navigateToLoginScreen() {
+    Navigator.push(context, MaterialPageRoute(builder: (context) => Login()));
   }
 
   @override
@@ -148,6 +153,11 @@ class _MyHomePageState extends State<MyHomePage> {
             Text(
               '$_counter',
               style: Theme.of(context).textTheme.headlineMedium,
+            ),
+
+            TextButton(
+              onPressed: _navigateToLoginScreen,
+              child: Text("Login Screen"),
             ),
 
             TextButton(

@@ -4,7 +4,7 @@ import 'package:flutter_chat_core/flutter_chat_core.dart' as types;
 class ReplyContent extends StatelessWidget {
   final types.TextMessage message;
 
-  const ReplyContent({required this.message});
+  const ReplyContent({super.key, required this.message});
 
   @override
   Widget build(BuildContext context) {
