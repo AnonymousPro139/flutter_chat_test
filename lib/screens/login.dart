@@ -1,41 +1,35 @@
 import 'package:flutter/material.dart';
-import 'package:test_firebase/firestore/services/auth/index.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:test_firebase/riverpod/index.dart';
 
-class Login extends StatefulWidget {
-  const Login({super.key});
-
-  @override
-  State<Login> createState() => _LoginState();
-}
-
-class _LoginState extends State<Login> {
-  final _phoneController = TextEditingController();
-  final _passwordController = TextEditingController();
-
-  void _login() {
-    // Implement your login logic here
-    final phone = _phoneController.text;
-    final password = _passwordController.text;
-
-    // For example, you can call an API to authenticate the user
-    print("Logging in with phone: $phone and password: $password");
-
-    Auth().login(phone, password);
-  }
+class LoginScreen extends ConsumerWidget {
+  const LoginScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final phoneController = TextEditingController();
+    final passwordController = TextEditingController();
+
+    void _login() {
+      final phone = phoneController.text;
+      final password = passwordController.text;
+
+      ref
+          .read(authControllerProvider.notifier)
+          .login(phone: phone, password: password);
+    }
+
     return Scaffold(
-      appBar: AppBar(title: Text("Login Screen12")),
+      appBar: AppBar(title: Text("Login")),
       body: Column(
         children: [
           TextField(
             decoration: InputDecoration(labelText: "Phone"),
-            controller: _phoneController,
+            controller: phoneController,
           ),
           TextField(
             decoration: InputDecoration(labelText: "Password"),
-            controller: _passwordController,
+            controller: passwordController,
             obscureText: true,
           ),
           ElevatedButton(onPressed: _login, child: Text("Login")),

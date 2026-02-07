@@ -5,24 +5,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_chat_core/flutter_chat_core.dart';
 import 'package:flutter_chat_core/flutter_chat_core.dart' as types;
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flyer_chat_text_message/flyer_chat_text_message.dart';
 import 'package:test_firebase/firestore/services/message/functions.dart';
 import 'package:test_firebase/firestore/services/message/listeners.dart';
 import 'package:test_firebase/firestore/services/message/utils.dart';
 import 'package:test_firebase/widgets/replyPreview.dart';
+import 'package:test_firebase/models/user.dart';
 
-class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
+class ChatScreen extends ConsumerStatefulWidget {
+  final AppUser user;
+
+  const ChatScreen({super.key, required this.user});
 
   @override
-  State<ChatScreen> createState() => _ChatScreenState();
+  ConsumerState<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _chatController = InMemoryChatController();
 
   types.TextMessage? _replyingTo;
-  // StreamSubscription? _subscription;
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _subscription;
 
   @override
@@ -78,7 +81,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void startListening() {
     _subscription = MessageListeners().listenToCollection(
-      path: 'channels/123/messages',
+      path: 'channels/1234/messages',
       onData: (snapshot) {
         final messages = snapshot.docs.map(firestoreToTextMessage).toList();
 
@@ -110,6 +113,9 @@ class _ChatScreenState extends State<ChatScreen> {
       child: Scaffold(
         body: Column(
           children: [
+            Text(
+              "Chat Screen for user: ${widget.user.phone} (${widget.user.id})",
+            ),
             if (_replyingTo != null)
               ReplyPreview(
                 message: _replyingTo!,
@@ -131,16 +137,16 @@ class _ChatScreenState extends State<ChatScreen> {
                       }) =>
                           FlyerChatTextMessage(message: message, index: index),
                 ),
-                currentUserId: '123',
+                currentUserId: widget.user.id, //123
                 backgroundColor: Color.fromARGB(255, 211, 29, 29),
                 onMessageSend: (text) {
                   print('replying message to send: $_replyingTo');
 
-                  MessageFunctions().writeMessage("123", {
+                  MessageFunctions().writeMessage2("1234", {
                     "message": text,
                     "createdAt":
                         FieldValue.serverTimestamp(), //Always use server timestamps when writing messages: This avoids clock skew issues.
-                    "senderId": "123",
+                    "senderId": widget.user.id,
                     "replyToMessageId": _replyingTo?.id,
                   });
 

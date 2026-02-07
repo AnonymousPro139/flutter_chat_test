@@ -5,7 +5,7 @@ class Auth extends FirestoreService {
     // Implement sign-in logic here
   }
 
-  void login(String phone, String password) {
+  Future<Map<String, dynamic>?> login(String phone, String password) async {
     // check phone and password
 
     // firestore
@@ -27,14 +27,29 @@ class Auth extends FirestoreService {
     //       print('Error during login: $error');
     //     });
 
-    firestore
+    // firestore
+    //     .collection('users')
+    //     .add({'phone': phone, 'password': password})
+    //     .then((docRef) {
+    //       print('User added with ID: ${docRef.id}');
+    //     })
+    //     .catchError((error) {
+    //       print('Error adding user: $error');
+    //     });
+
+    final query = await firestore
         .collection('users')
-        .add({'phone': phone, 'password': password})
-        .then((docRef) {
-          print('User added with ID: ${docRef.id}');
-        })
-        .catchError((error) {
-          print('Error adding user: $error');
-        });
+        .where('phone', isEqualTo: phone)
+        .where('password', isEqualTo: password)
+        .limit(1)
+        .get();
+
+    if (query.docs.isNotEmpty) {
+      // exists
+      return {'id': query.docs.first.id, 'phone': phone};
+    } else {
+      // does NOT exist
+      return {'id': null, 'phone': null};
+    }
   }
 }

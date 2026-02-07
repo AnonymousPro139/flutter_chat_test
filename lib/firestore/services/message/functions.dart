@@ -19,6 +19,11 @@ class MessageFunctions extends FirestoreService {
     firestore.collection("channels").doc(cId).collection('messages').add(data);
   }
 
+  void writeMessage2(String cId, Map<String, dynamic> data) {
+    // create a new message document with an auto-generated ID
+    firestore.collection("channels").doc().collection('messages').add(data);
+  }
+
   void readData(String collection, String docId) async {
     DocumentSnapshot snapshot = await firestore
         .collection(collection)
