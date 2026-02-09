@@ -1,10 +1,16 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_core/flutter_chat_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:test_firebase/firestore/services/message/functions.dart';
+import 'package:test_firebase/firestore/services/message/listeners.dart';
+import 'package:test_firebase/firestore/services/message/utils.dart';
 import 'package:test_firebase/models/user.dart';
 import 'package:test_firebase/riverpod/index.dart';
-import 'package:test_firebase/screens/chat.dart';
+import 'package:test_firebase/widgets/chat_tile.dart';
+import 'package:test_firebase/firestore/services/index.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   final AppUser user;
@@ -16,30 +22,35 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  int _counter = 0;
+  final _chatController = InMemoryChatController();
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _subscription;
 
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
+  void startListening() {
+    _subscription = MessageListeners().listenToCollection(
+      path: 'chats',
+      myid: widget.user.id,
+      onData: (snapshot) {
+        final messages = snapshot.docs.map(firestoreToTextMessage).toList();
 
-  void _addDataToFirestore() {
-    MessageFunctions().writeMessage("123", {
-      "message": "Hello from home.dart",
-      "createdAt": DateTime.now().toIso8601String(),
-      "senderId": "user_123",
-    });
-  }
+        print('msgs: $messages');
 
-  void _getDataFromFirestore() {
-    MessageFunctions().readData("channels", "1");
-  }
+        _chatController.setMessages(messages);
 
-  void _navigateToChatScreen() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => ChatScreen(user: widget.user)),
+        // Process only changes (incremental updates)
+        for (var change in snapshot.docChanges) {
+          switch (change.type) {
+            case DocumentChangeType.added:
+              print('New message: ${change.doc.data()}');
+              break;
+            case DocumentChangeType.modified:
+              print('Modified message: ${change.doc.data()}');
+              break;
+            case DocumentChangeType.removed:
+              print('Removed message: ${change.doc.id}');
+              break;
+          }
+        }
+      },
     );
   }
 
@@ -52,71 +63,53 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text("Home (${widget.user.phone}) - (${widget.user.id})"),
+        title: Text("Chats (${widget.user.phone}) - (${widget.user.id})"),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'You have pushed the button this many times:',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            TextButton(
-              onPressed: _navigateToChatScreen,
-              child: const Text("Chat Screen"),
-            ),
-            TextButton(
-              onPressed: _addDataToFirestore,
-              child: const Text("Add Data"),
-            ),
-            TextButton(
-              onPressed: _getDataFromFirestore,
-              child: const Text("Get Data"),
-            ),
-            TextButton(onPressed: _logout, child: const Text("Logout")),
-            Expanded(
-              child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                stream: FirebaseFirestore.instance
-                    .collection('channels')
-                    .doc("123")
-                    .collection('messages')
-                    .orderBy('createdAt', descending: false)
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
 
-                  final messages = snapshot.data!.docs;
+      body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+        stream: MessageFunctions().userChatsStream(widget.user.id),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-                  return ListView.builder(
-                    itemCount: messages.length,
-                    itemBuilder: (context, index) {
-                      final msg = messages[index].data();
-                      final senderId = msg['senderId'] ?? 'Unknown';
-                      final message = msg['message'] ?? '';
+          final docs = snapshot.data?.docs ?? [];
+          if (docs.isEmpty) {
+            return const Center(child: Text('No chats yet'));
+          }
 
-                      return ListTile(
-                        title: Text(senderId.toString()),
-                        subtitle: Text(message.toString()),
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+          return ListView.separated(
+            itemCount: docs.length,
+            separatorBuilder: (_, __) => const Divider(height: 1),
+            itemBuilder: (context, index) {
+              final chatDoc = docs[index];
+              final chat = chatDoc.data();
+
+              final participants = List<String>.from(
+                chat['participants'] ?? [],
+              );
+              final otherUid = participants.firstWhere(
+                (id) => id != widget.user.id,
+                orElse: () => '',
+              );
+
+              final lastMessage = (chat['lastMessage'] ?? '') as String;
+              final lastMessageTime = chat['lastMessageTime'];
+
+              return ChatTile(
+                db: FirestoreService().firestore,
+                chatId: chatDoc.id,
+                otherUid: otherUid,
+                lastMessage: lastMessage,
+                lastMessageTime: lastMessageTime,
+                user: widget.user,
+              );
+            },
+          );
+        },
       ),
     );
   }

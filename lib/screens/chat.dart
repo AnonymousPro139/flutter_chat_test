@@ -15,8 +15,15 @@ import 'package:test_firebase/models/user.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final AppUser user;
+  final String chatId;
+  final String otherUid;
 
-  const ChatScreen({super.key, required this.user});
+  const ChatScreen({
+    super.key,
+    required this.user,
+    required this.chatId,
+    required this.otherUid,
+  });
 
   @override
   ConsumerState<ChatScreen> createState() => _ChatScreenState();
@@ -37,40 +44,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   void initState() {
     super.initState();
 
-    // _subscription = FirebaseFirestore.instance
-    //     .collection('channels')
-    //     .doc("123")
-    //     .collection('messages')
-    //     .orderBy('createdAt', descending: false)
-    //     .startAfter([DateTime.now()])
-    //     .snapshots()
-    //     .listen((snapshot) {
-    //       for (final change in snapshot.docChanges) {
-    //         final doc = change.doc;
-    //         // Map Firestore doc -> types.Message (adjust to your mapper)
-    //         final msg = firestoreToTextMessage2(doc);
-
-    //         switch (change.type) {
-    //           case DocumentChangeType.added:
-    //             // _handleAdded(change.newIndex, msg);
-    //             break;
-    //           case DocumentChangeType.modified:
-    //             // _handleModified(change.oldIndex, change.newIndex, msg);
-    //             break;
-    //           case DocumentChangeType.removed:
-    //             // _handleRemoved(change.oldIndex, id);
-    //             break;
-    //         }
-    //       }
-
-    //       final messages = snapshot.docs.map(firestoreToTextMessage).toList();
-
-    //       print('msgs: $messages');
-
-    //       _chatController.setMessages(messages);
-    //     });
-
-    startListening();
+    // startListening();
   }
 
   @override
@@ -79,43 +53,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     super.dispose();
   }
 
-  void startListening() {
-    _subscription = MessageListeners().listenToCollection(
-      path: 'channels/1234/messages',
-      onData: (snapshot) {
-        final messages = snapshot.docs.map(firestoreToTextMessage).toList();
-
-        print('msgs: $messages');
-
-        _chatController.setMessages(messages);
-
-        // Process only changes (incremental updates)
-        for (var change in snapshot.docChanges) {
-          switch (change.type) {
-            case DocumentChangeType.added:
-              print('New message: ${change.doc.data()}');
-              break;
-            case DocumentChangeType.modified:
-              print('Modified message: ${change.doc.data()}');
-              break;
-            case DocumentChangeType.removed:
-              print('Removed message: ${change.doc.id}');
-              break;
-          }
-        }
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
         body: Column(
           children: [
-            Text(
-              "Chat Screen for user: ${widget.user.phone} (${widget.user.id})",
-            ),
+            Text("Logged user: ${widget.user.phone} (${widget.user.id})"),
+            Text("Other user: ${widget.otherUid}, chatId: ${widget.chatId}"),
+
             if (_replyingTo != null)
               ReplyPreview(
                 message: _replyingTo!,
@@ -139,16 +85,27 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 ),
                 currentUserId: widget.user.id, //123
                 backgroundColor: Color.fromARGB(255, 211, 29, 29),
-                onMessageSend: (text) {
+                onMessageSend: (text) async {
                   print('replying message to send: $_replyingTo');
 
-                  MessageFunctions().writeMessage2("1234", {
-                    "message": text,
-                    "createdAt":
-                        FieldValue.serverTimestamp(), //Always use server timestamps when writing messages: This avoids clock skew issues.
-                    "senderId": widget.user.id,
-                    "replyToMessageId": _replyingTo?.id,
-                  });
+                  // MessageFunctions().writeMessage2("1234", {
+                  //   "message": text,
+                  //   "createdAt":
+                  //       FieldValue.serverTimestamp(), //Always use server timestamps when writing messages: This avoids clock skew issues.
+                  //   "senderId": widget.user.id,
+                  //   "replyToMessageId": _replyingTo?.id,
+                  // });
+
+                  String chatId = await MessageFunctions().createOrGetChat(
+                    widget.user.id,
+                    widget.otherUid,
+                  );
+
+                  MessageFunctions().sendMessage(
+                    chatId: chatId,
+                    senderId: widget.user.id,
+                    text: text,
+                  );
 
                   if (_replyingTo != null) {
                     setState(() => _replyingTo = null);

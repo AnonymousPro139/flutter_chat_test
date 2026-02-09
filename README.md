@@ -12,10 +12,10 @@ chats
 ├── lastMessage
 ├── lastMessageTime
 └── messages (subcollection)
-└── messageId
-├── senderId
-├── text
-├── timestamp
+    └── messageId
+    ├── senderId
+    ├── text
+    ├── timestamp
 
                 Optional Message Widget Packages
 

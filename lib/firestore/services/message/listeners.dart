@@ -48,10 +48,12 @@ class MessageListeners extends FirestoreService {
 
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>> listenToCollection({
     required String path,
+    required String myid,
     required void Function(QuerySnapshot<Map<String, dynamic>> snapshot) onData,
   }) {
     final collectionRef = firestore
         .collection(path)
+        .where('participants', arrayContains: myid)
         .orderBy('createdAt', descending: false)
         .startAfter([DateTime.now()]);
 

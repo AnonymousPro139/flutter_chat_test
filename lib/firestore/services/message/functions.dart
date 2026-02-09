@@ -24,6 +24,11 @@ class MessageFunctions extends FirestoreService {
     firestore.collection("channels").doc().collection('messages').add(data);
   }
 
+  void writeMessage3(String cId, Map<String, dynamic> data) {
+    // create a new message document with an auto-generated ID
+    // firestore.collection("chats").doc().collection("").add(data).collection('messages').add(data);
+  }
+
   void readData(String collection, String docId) async {
     DocumentSnapshot snapshot = await firestore
         .collection(collection)
@@ -40,5 +45,65 @@ class MessageFunctions extends FirestoreService {
     //       fromFirestore: (snap, _) => Message.fromDoc(snap),
     //       toFirestore: (msg, _) => msg.toMap(),
     //     );
+  }
+
+  void getChats(String uId) {
+    firestore
+        .collection("channels")
+        .where('members', arrayContains: uId)
+        .snapshots()
+        .listen((snapshot) {
+          for (final doc in snapshot.docs) {
+            print("CHAT::: ${doc.data()}");
+          }
+        });
+  }
+
+  Future<String> createOrGetChat(String uid1, String uid2) async {
+    final chatId = chatIdForUsers(uid1, uid2);
+
+    final chatRef = firestore.collection('chats').doc(chatId);
+
+    await chatRef.set({
+      'participants': [uid1, uid2],
+      'createdAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+
+    return chatId;
+  }
+
+  String chatIdForUsers(String uid1, String uid2) {
+    final ids = [uid1, uid2]..sort();
+    return '${ids[0]}_${ids[1]}';
+  }
+
+  Future<void> sendMessage({
+    required String chatId,
+    required String senderId,
+    required String text,
+  }) async {
+    final chatRef = firestore.collection('chats').doc(chatId);
+    final msgRef = chatRef.collection('messages').doc(); // auto id
+
+    final now = FieldValue.serverTimestamp();
+
+    final batch = firestore.batch();
+
+    batch.set(msgRef, {'senderId': senderId, 'text': text, 'timestamp': now});
+
+    batch.set(chatRef, {
+      'lastMessage': text,
+      'lastMessageTime': now,
+    }, SetOptions(merge: true));
+
+    await batch.commit();
+  }
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> userChatsStream(String uid) {
+    return firestore
+        .collection('chats')
+        .where('participants', arrayContains: uid)
+        .orderBy('lastMessageTime', descending: true)
+        .snapshots();
   }
 }
