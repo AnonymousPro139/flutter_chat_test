@@ -47,16 +47,12 @@ class MessageFunctions extends FirestoreService {
     //     );
   }
 
-  void getChats(String uId) {
-    firestore
-        .collection("channels")
-        .where('members', arrayContains: uId)
-        .snapshots()
-        .listen((snapshot) {
-          for (final doc in snapshot.docs) {
-            print("CHAT::: ${doc.data()}");
-          }
-        });
+  Future<QuerySnapshot<Map<String, dynamic>>> fetchInbox(String uId) {
+    return firestore
+        .collection("chats")
+        .where('participants', arrayContains: uId)
+        .orderBy('lastMessageTime', descending: true)
+        .get();
   }
 
   Future<String> createOrGetChat(String uid1, String uid2) async {
@@ -67,6 +63,7 @@ class MessageFunctions extends FirestoreService {
     await chatRef.set({
       'participants': [uid1, uid2],
       'createdAt': FieldValue.serverTimestamp(),
+      "lastMessageTime": FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
 
     return chatId;
@@ -89,12 +86,15 @@ class MessageFunctions extends FirestoreService {
 
     final batch = firestore.batch();
 
-    batch.set(msgRef, {'senderId': senderId, 'text': text, 'timestamp': now});
+    batch.set(msgRef, {'senderId': senderId, 'text': text, 'createdAt': now});
 
-    batch.set(chatRef, {
-      'lastMessage': text,
-      'lastMessageTime': now,
-    }, SetOptions(merge: true));
+    // Eniig cloud function-r oorchluulj bga
+    // End uurchluh, cloud function-r oorchluuleh 2n dawuu sul tal ?
+
+    // batch.set(chatRef, {
+    //   'lastMessage': text,
+    //   'lastMessageTime': now,
+    // }, SetOptions(merge: true));
 
     await batch.commit();
   }

@@ -1,21 +1,13 @@
-users/{userId}
-chats/{chatId}
-chats/{chatId}/messages/{messageId}
-userChats/{userId}/chats/{chatId}
-keys/{userId}
-
-Yes — duplicate data on purpose. Firestore loves denormalization.
-
 chats
 └── chatId
 ├── participants: [uid1, uid2]
 ├── lastMessage
 ├── lastMessageTime
 └── messages (subcollection)
-    └── messageId
-    ├── senderId
-    ├── text
-    ├── timestamp
+└── messageId
+├── senderId
+├── text
+├── timestamp
 
                 Optional Message Widget Packages
 

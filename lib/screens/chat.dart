@@ -96,13 +96,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   //   "replyToMessageId": _replyingTo?.id,
                   // });
 
-                  String chatId = await MessageFunctions().createOrGetChat(
-                    widget.user.id,
-                    widget.otherUid,
-                  );
+                  // End shaardlagagui !!!!
+                  // String chatId = await MessageFunctions().createOrGetChat(
+                  //   widget.user.id,
+                  //   widget.otherUid,
+                  // );
 
                   MessageFunctions().sendMessage(
-                    chatId: chatId,
+                    chatId: widget.chatId,
                     senderId: widget.user.id,
                     text: text,
                   );

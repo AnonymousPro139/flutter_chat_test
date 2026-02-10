@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:test_firebase/models/user.dart';
 import 'package:test_firebase/screens/Chat.dart';
 
@@ -74,15 +73,6 @@ class ChatTile extends StatelessWidget {
             style: Theme.of(context).textTheme.bodySmall,
           ),
           onTap: () {
-            // Navigator.push(
-            //   context,
-            //   MaterialPageRoute(
-            //     builder: (_) =>
-            //         ChatRoomScreen(chatId: chatId, otherUid: otherUid),
-
-            //   ),
-            // );
-
             if (user != null) {
               final appUser = AppUser.fromMap(user);
 
@@ -103,16 +93,16 @@ class ChatTile extends StatelessWidget {
     );
   }
 
-  @override
-  ConsumerState<ConsumerStatefulWidget> createState() {
-    // TODO: implement createState
-    throw UnimplementedError();
-  }
+  // @override
+  // ConsumerState<ConsumerStatefulWidget> createState() {
+  //   // TODO: implement createState
+  //   throw UnimplementedError();
+  // }
 }
 
-extension on AsyncValue<AppUser?> {
-  get user => null;
-}
+// extension on AsyncValue<AppUser?> {
+//   get user => null;
+// }
 
 class ChatRoomScreen extends StatelessWidget {
   const ChatRoomScreen({

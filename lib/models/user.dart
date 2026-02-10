@@ -4,10 +4,7 @@ class AppUser {
 
   const AppUser({required this.id, required this.phone});
 
-  static fromMap(Map<String, dynamic> user) {
-    return AppUser(
-      id: user['id'] ?? '' as String,
-      phone: user['phone'] ?? '' as String,
-    );
+  static AppUser fromMap(Map<String, dynamic> user) {
+    return AppUser(id: user['id'] ?? '', phone: user['phone'] ?? '');
   }
 }

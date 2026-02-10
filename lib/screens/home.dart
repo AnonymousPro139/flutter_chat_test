@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +10,8 @@ import 'package:test_firebase/firestore/services/message/listeners.dart';
 import 'package:test_firebase/firestore/services/message/utils.dart';
 import 'package:test_firebase/models/user.dart';
 import 'package:test_firebase/riverpod/index.dart';
+import 'package:test_firebase/screens/home2.dart';
+import 'package:test_firebase/screens/search.dart';
 import 'package:test_firebase/widgets/chat_tile.dart';
 import 'package:test_firebase/firestore/services/index.dart';
 
@@ -23,39 +26,18 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _chatController = InMemoryChatController();
-  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _subscription;
 
-  void startListening() {
-    _subscription = MessageListeners().listenToCollection(
-      path: 'chats',
-      myid: widget.user.id,
-      onData: (snapshot) {
-        final messages = snapshot.docs.map(firestoreToTextMessage).toList();
-
-        print('msgs: $messages');
-
-        _chatController.setMessages(messages);
-
-        // Process only changes (incremental updates)
-        for (var change in snapshot.docChanges) {
-          switch (change.type) {
-            case DocumentChangeType.added:
-              print('New message: ${change.doc.data()}');
-              break;
-            case DocumentChangeType.modified:
-              print('Modified message: ${change.doc.data()}');
-              break;
-            case DocumentChangeType.removed:
-              print('Removed message: ${change.doc.id}');
-              break;
-          }
-        }
-      },
-    );
+  Query<Map<String, dynamic>> _inboxQuery(String uid) {
+    return FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('chatRefs')
+        .orderBy('updatedAt', descending: true)
+        .limit(50);
   }
 
-  void _logout() {
-    ref.read(authControllerProvider.notifier).logout();
+  Future<QuerySnapshot<Map<String, dynamic>>> fetchInitialInbox(String uid) {
+    return _inboxQuery(uid).get();
   }
 
   @override
@@ -67,7 +49,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
 
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-        stream: MessageFunctions().userChatsStream(widget.user.id),
+        stream: MessageListeners().listeningInbox(myid: widget.user.id),
+
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
@@ -88,6 +71,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               final chatDoc = docs[index];
               final chat = chatDoc.data();
 
+              print("chat data: $chat");
+
               final participants = List<String>.from(
                 chat['participants'] ?? [],
               );
@@ -96,14 +81,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 orElse: () => '',
               );
 
-              final lastMessage = (chat['lastMessage'] ?? '') as String;
+              // final lastMessage = (chat['lastMessage'] ?? '') as String;
+
               final lastMessageTime = chat['lastMessageTime'];
 
               return ChatTile(
                 db: FirestoreService().firestore,
                 chatId: chatDoc.id,
                 otherUid: otherUid,
-                lastMessage: lastMessage,
+                lastMessage: chat['lastMessage']?['text'] ?? '',
                 lastMessageTime: lastMessageTime,
                 user: widget.user,
               );
@@ -111,6 +97,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           );
         },
       ),
+
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 16.0, right: 16.0),
+        child: FloatingActionButton(
+          onPressed: () => {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => HomeScreen2(user: widget.user)),
+            ),
+          },
+          child: Icon(Icons.search),
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 }
