@@ -2,11 +2,10 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_chat_core/flutter_chat_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:test_firebase/models/user.dart';
 import 'package:test_firebase/screens/search.dart';
-import 'package:test_firebase/widgets/chat_tile.dart';
+import 'package:test_firebase/widgets/ChatElement.dart';
 import 'package:test_firebase/firestore/services/index.dart';
 
 class HomeScreen2 extends ConsumerStatefulWidget {
@@ -19,30 +18,21 @@ class HomeScreen2 extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState2 extends ConsumerState<HomeScreen2> {
-  final _chatController = InMemoryChatController();
-  late final QuerySnapshot<Map<String, dynamic>> initialInboxFuture;
-
-  Query<Map<String, dynamic>> _inboxQuery(String uid) {
-    return FirebaseFirestore.instance
-        .collection('chats')
-        .where('participants', arrayContains: uid)
-        .orderBy('lastMessageTime', descending: true)
-        .limit(50);
-  }
+  late final Stream<QuerySnapshot<Map<String, dynamic>>> _inboxStream;
 
   Query<Map<String, dynamic>> _inboxQueryMust(String uid) {
     return FirebaseFirestore.instance
         .collection('users')
         .doc(uid)
         .collection('chatRefs')
-        .orderBy('createdAt', descending: true)
+        .orderBy('lastMessageAt', descending: true)
         .limit(50);
   }
 
   Future<QuerySnapshot<Map<String, dynamic>>> fetchInitialInbox(String uid) {
-    Future<QuerySnapshot<Map<String, dynamic>>> data = _inboxQuery(uid).get();
-
-    print(" fetchInitialInbox called for uid: $uid, future: $data");
+    Future<QuerySnapshot<Map<String, dynamic>>> data = _inboxQueryMust(
+      uid,
+    ).get();
 
     return data;
   }
@@ -50,7 +40,14 @@ class _HomeScreenState2 extends ConsumerState<HomeScreen2> {
   Stream<QuerySnapshot<Map<String, dynamic>>> listeningInbox({
     required String myId,
   }) {
-    return _inboxQuery(myId).snapshots();
+    return _inboxQueryMust(myId).snapshots();
+  }
+
+  // avoid to recreate stream on every build, create it once in initState and use the variable in StreamBuilder
+  @override
+  void initState() {
+    super.initState();
+    _inboxStream = listeningInbox(myId: widget.user.id);
   }
 
   @override
@@ -73,7 +70,8 @@ class _HomeScreenState2 extends ConsumerState<HomeScreen2> {
 
           return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
             initialData: initialSnap.data,
-            stream: listeningInbox(myId: widget.user.id),
+            // stream: listeningInbox(myId: widget.user.id),
+            stream: _inboxStream,
             builder: (context, snapshot) {
               if (snapshot.hasError) {
                 return Center(child: Text('Error: ${snapshot.error}'));
@@ -83,6 +81,7 @@ class _HomeScreenState2 extends ConsumerState<HomeScreen2> {
               }
 
               final docs = snapshot.data?.docs ?? [];
+
               if (docs.isEmpty) {
                 return const Center(child: Text('No chats yet'));
               }
@@ -96,24 +95,32 @@ class _HomeScreenState2 extends ConsumerState<HomeScreen2> {
 
                   print("chat data: $chat");
 
-                  final participants = List<String>.from(
-                    chat['participants'] ?? [],
-                  );
-                  final otherUid = participants.firstWhere(
-                    (id) => id != widget.user.id,
-                    orElse: () => '',
-                  );
+                  // final participants = List<String>.from(
+                  //   chat['participants'] ?? [],
+                  // );
+                  // final otherUid = participants.firstWhere(
+                  //   (id) => id != widget.user.id,
+                  //   orElse: () => '',
+                  // );
 
                   // final lastMessage = (chat['lastMessage'] ?? '') as String;
 
-                  final lastMessageTime = chat['lastMessageTime'];
+                  final lastMessageAt = chat['lastMessageAt'];
 
-                  return ChatTile(
+                  // return ChatTile(
+                  //   db: FirestoreService().firestore,
+                  //   chatId: chatDoc.id,
+                  //   otherUid: '', // shaardlagatai eseh
+                  //   lastMessage: chat['lastMessageText'] ?? 'no last msg bby',
+                  //   lastMessageAt: lastMessageAt,
+                  //   user: widget.user,
+                  // );
+
+                  return ChatElement(
                     db: FirestoreService().firestore,
                     chatId: chatDoc.id,
-                    otherUid: otherUid,
-                    lastMessage: chat['lastMessage']?['text'] ?? '',
-                    lastMessageTime: lastMessageTime,
+                    lastMessage: chat['lastMessageText'] ?? 'no last msg bby',
+                    lastMessageAt: lastMessageAt,
                     user: widget.user,
                   );
                 },

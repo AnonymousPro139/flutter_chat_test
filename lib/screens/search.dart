@@ -4,6 +4,7 @@ import 'package:test_firebase/firestore/services/message/functions.dart';
 import 'package:test_firebase/firestore/services/user/index.dart';
 import 'package:test_firebase/models/user.dart';
 import 'package:test_firebase/riverpod/index.dart';
+import 'package:test_firebase/screens/chat.dart';
 
 class PhoneSearchBottomSheet extends ConsumerStatefulWidget {
   const PhoneSearchBottomSheet({super.key});
@@ -36,16 +37,15 @@ class _PhoneSearchBottomSheetState
 
   @override
   Widget build(BuildContext context) {
+    var createdChatId = "";
     final authState = ref.watch(authControllerProvider);
     final loggedUser = authState.value; // AppUser? (logged-in user)
-    String test;
 
     return DraggableScrollableSheet(
       initialChildSize: 1.0,
       minChildSize: 1.0,
       maxChildSize: 1.0,
       builder: (context, scrollController) {
-        String test;
         return Container(
           padding: EdgeInsets.only(
             top: 16,
@@ -112,12 +112,21 @@ class _PhoneSearchBottomSheetState
                   title: Text("Phone: ${resultUser!.phone}"),
                   subtitle: Text("User ID: ${resultUser!.id}"),
                   onTap: () async => {
-                    test = await MessageFunctions().createOrGetChat(
+                    createdChatId = await MessageFunctions().createOrGetChat(
                       loggedUser!.id,
                       resultUser!.id,
                     ),
 
-                    print("CHAT ID: $test"),
+                    print("Created chat ID: $createdChatId"),
+
+                    // navigate to chat screen with this chat ID
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            ChatScreen(chatId: createdChatId, user: loggedUser),
+                      ),
+                    ),
                   },
                 ),
 

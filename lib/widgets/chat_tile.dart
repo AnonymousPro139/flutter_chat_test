@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:test_firebase/models/user.dart';
-import 'package:test_firebase/screens/Chat.dart';
+import 'package:test_firebase/screens/chat.dart';
 
 class ChatTile extends StatelessWidget {
   const ChatTile({
@@ -10,7 +10,7 @@ class ChatTile extends StatelessWidget {
     required this.chatId,
     required this.otherUid,
     required this.lastMessage,
-    required this.lastMessageTime,
+    required this.lastMessageAt,
     required this.user,
   });
 
@@ -19,7 +19,7 @@ class ChatTile extends StatelessWidget {
   final String chatId;
   final String otherUid;
   final String lastMessage;
-  final dynamic lastMessageTime; // Timestamp? (Firestore)
+  final dynamic lastMessageAt; // Timestamp? (Firestore)
 
   String _formatTime(dynamic ts) {
     if (ts == null) return '';
@@ -39,7 +39,7 @@ class ChatTile extends StatelessWidget {
       return ListTile(
         title: const Text('Unknown user'),
         subtitle: Text(lastMessage),
-        trailing: Text(_formatTime(lastMessageTime)),
+        trailing: Text(_formatTime(lastMessageAt)),
       );
     }
 
@@ -69,7 +69,7 @@ class ChatTile extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
           trailing: Text(
-            _formatTime(lastMessageTime),
+            _formatTime(lastMessageAt),
             style: Theme.of(context).textTheme.bodySmall,
           ),
           onTap: () {
@@ -79,11 +79,7 @@ class ChatTile extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => ChatScreen(
-                    chatId: chatId,
-                    otherUid: otherUid,
-                    user: appUser,
-                  ),
+                  builder: (_) => ChatScreen(chatId: chatId, user: appUser),
                 ),
               );
             }
