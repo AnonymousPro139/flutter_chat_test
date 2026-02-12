@@ -5,6 +5,7 @@ import 'package:test_firebase/firestore/services/user/index.dart';
 import 'package:test_firebase/models/user.dart';
 import 'package:test_firebase/riverpod/index.dart';
 import 'package:test_firebase/screens/chat.dart';
+import 'package:test_firebase/screens/chat2.dart';
 
 class PhoneSearchBottomSheet extends ConsumerStatefulWidget {
   const PhoneSearchBottomSheet({super.key});
@@ -123,8 +124,10 @@ class _PhoneSearchBottomSheetState
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) =>
-                            ChatScreen(chatId: createdChatId, user: loggedUser),
+                        builder: (context) => ChatScreen2(
+                          chatId: createdChatId,
+                          user: loggedUser,
+                        ),
                       ),
                     ),
                   },

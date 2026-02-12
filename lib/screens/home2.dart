@@ -3,10 +3,10 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:test_firebase/firestore/services/message/handlers.dart';
 import 'package:test_firebase/models/user.dart';
 import 'package:test_firebase/screens/search.dart';
 import 'package:test_firebase/widgets/ChatElement.dart';
-import 'package:test_firebase/firestore/services/index.dart';
 
 class HomeScreen2 extends ConsumerStatefulWidget {
   final AppUser user;
@@ -20,34 +20,11 @@ class HomeScreen2 extends ConsumerStatefulWidget {
 class _HomeScreenState2 extends ConsumerState<HomeScreen2> {
   late final Stream<QuerySnapshot<Map<String, dynamic>>> _inboxStream;
 
-  Query<Map<String, dynamic>> _inboxQueryMust(String uid) {
-    return FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .collection('chatRefs')
-        .orderBy('lastMessageAt', descending: true)
-        .limit(50);
-  }
-
-  Future<QuerySnapshot<Map<String, dynamic>>> fetchInitialInbox(String uid) {
-    Future<QuerySnapshot<Map<String, dynamic>>> data = _inboxQueryMust(
-      uid,
-    ).get();
-
-    return data;
-  }
-
-  Stream<QuerySnapshot<Map<String, dynamic>>> listeningInbox({
-    required String myId,
-  }) {
-    return _inboxQueryMust(myId).snapshots();
-  }
-
   // avoid to recreate stream on every build, create it once in initState and use the variable in StreamBuilder
   @override
   void initState() {
     super.initState();
-    _inboxStream = listeningInbox(myId: widget.user.id);
+    _inboxStream = MessageHandlers().listeningInbox(myId: widget.user.id);
   }
 
   @override
@@ -59,7 +36,7 @@ class _HomeScreenState2 extends ConsumerState<HomeScreen2> {
       ),
 
       body: FutureBuilder<QuerySnapshot<Map<String, dynamic>>>(
-        future: fetchInitialInbox(widget.user.id),
+        future: MessageHandlers().fetchInitialInbox(myid: widget.user.id),
         builder: (context, initialSnap) {
           if (initialSnap.hasError) {
             return Center(child: Text('Error: ${initialSnap.error}'));
@@ -70,7 +47,6 @@ class _HomeScreenState2 extends ConsumerState<HomeScreen2> {
 
           return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
             initialData: initialSnap.data,
-            // stream: listeningInbox(myId: widget.user.id),
             stream: _inboxStream,
             builder: (context, snapshot) {
               if (snapshot.hasError) {
@@ -93,35 +69,11 @@ class _HomeScreenState2 extends ConsumerState<HomeScreen2> {
                   final chatDoc = docs[index];
                   final chat = chatDoc.data();
 
-                  print("chat data: $chat");
-
-                  // final participants = List<String>.from(
-                  //   chat['participants'] ?? [],
-                  // );
-                  // final otherUid = participants.firstWhere(
-                  //   (id) => id != widget.user.id,
-                  //   orElse: () => '',
-                  // );
-
-                  // final lastMessage = (chat['lastMessage'] ?? '') as String;
-
-                  final lastMessageAt = chat['lastMessageAt'];
-
-                  // return ChatTile(
-                  //   db: FirestoreService().firestore,
-                  //   chatId: chatDoc.id,
-                  //   otherUid: '', // shaardlagatai eseh
-                  //   lastMessage: chat['lastMessageText'] ?? 'no last msg bby',
-                  //   lastMessageAt: lastMessageAt,
-                  //   user: widget.user,
-                  // );
-
                   return ChatElement(
-                    db: FirestoreService().firestore,
                     chatId: chatDoc.id,
-                    lastMessage: chat['lastMessageText'] ?? 'no last msg bby',
-                    lastMessageAt: lastMessageAt,
                     user: widget.user,
+                    lastMessage: chat['lastMessageText'],
+                    lastMessageAt: chat['lastMessageAt'],
                   );
                 },
               );

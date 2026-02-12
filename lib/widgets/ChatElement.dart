@@ -2,11 +2,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:test_firebase/models/user.dart';
 import 'package:test_firebase/screens/chat.dart';
+import 'package:test_firebase/screens/chat2.dart';
 
 class ChatElement extends StatelessWidget {
   const ChatElement({
     super.key,
-    required this.db,
     required this.chatId,
     required this.lastMessage,
     required this.lastMessageAt,
@@ -14,7 +14,6 @@ class ChatElement extends StatelessWidget {
   });
 
   final AppUser user;
-  final FirebaseFirestore db;
   final String chatId;
   final String lastMessage;
   final dynamic lastMessageAt; // Timestamp? (Firestore)
@@ -52,7 +51,7 @@ class ChatElement extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => ChatScreen(user: user, chatId: chatId),
+            builder: (_) => ChatScreen2(user: user, chatId: chatId),
           ),
         );
       },

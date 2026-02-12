@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:test_firebase/firestore/services/message/listeners.dart';
 import 'package:test_firebase/models/user.dart';
 import 'package:test_firebase/screens/search.dart';
 import 'package:test_firebase/widgets/chat_tile.dart';
@@ -28,7 +27,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
 
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-        stream: MessageListeners().listeningInbox(myid: widget.user.id),
+        stream:
+            null, //  MessageListeners().listeningInbox(myid: widget.user.id),
 
         builder: (context, snapshot) {
           if (snapshot.hasError) {

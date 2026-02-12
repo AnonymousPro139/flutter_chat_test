@@ -1,10 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_chat_core/flutter_chat_core.dart';
-import 'package:flutter_chat_core/flutter_chat_core.dart' as types;
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_chat_core/flutter_chat_core.dart';
+import 'package:flutter_chat_core/flutter_chat_core.dart' as types;
+import 'package:flyer_chat_text_message/flyer_chat_text_message.dart';
+import 'package:flyer_chat_image_message/flyer_chat_image_message.dart';
+import 'package:image_picker/image_picker.dart';
+
 import 'package:test_firebase/firestore/services/message/functions.dart';
+import 'package:test_firebase/firestore/services/message/handlers.dart';
 import 'package:test_firebase/widgets/replyPreview.dart';
 import 'package:test_firebase/models/user.dart';
 
@@ -22,53 +27,49 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   final _chatController = InMemoryChatController();
   late final Stream<QuerySnapshot<Map<String, dynamic>>> _listenerChat;
   types.TextMessage? _replyingTo;
+  final ImagePicker _picker = ImagePicker();
 
   Future<void> loadInitial() async {
-    final snap = await FirebaseFirestore.instance
-        .collection('chats')
-        .doc(widget.chatId)
-        .collection('messages')
-        .orderBy('createdAt', descending: true)
-        .limit(50)
-        .get();
+    final snap = await MessageHandlers().fetchMessagesChat(
+      chatId: widget.chatId,
+    );
 
     final msgs = snap.docs.map((d) {
       final data = d.data();
 
-      return TextMessage(
-        id: d.id,
-        authorId: data['senderId'] as String,
-
-        // createdAt: (data['createdAt'] as Timestamp).toDate().toUtc(),
-        createdAt: data['createdAt'] == null
-            ? DateTime.now()
-            : (data['createdAt'] is String
-                  ? DateTime.parse(data['createdAt'])
-                  : (data['createdAt'] as Timestamp).toDate()),
-        text: (data['text'] ?? '') as String,
-      );
+      if (data['type'] == 'file') {
+        return ImageMessage(
+          id: d.id,
+          authorId: data['senderId'],
+          createdAt: data['createdAt'] == null
+              ? DateTime.now()
+              : (data['createdAt'] is String
+                    ? DateTime.parse(data['createdAt'])
+                    : (data['createdAt'] as Timestamp).toDate()),
+          source: data['text'],
+        );
+      } else {
+        return TextMessage(
+          id: d.id,
+          authorId: data['senderId'] as String,
+          createdAt: data['createdAt'] == null
+              ? DateTime.now()
+              : (data['createdAt'] is String
+                    ? DateTime.parse(data['createdAt'])
+                    : (data['createdAt'] as Timestamp).toDate()),
+          text: (data['text'] ?? '') as String,
+        );
+      }
     }).toList();
 
     _chatController.setMessages(msgs.reversed.toList());
   }
 
-  Stream<QuerySnapshot<Map<String, dynamic>>> listeningChat({
-    required String chatId,
-  }) {
-    return FirebaseFirestore.instance
-        .collection('chats')
-        .doc(chatId)
-        .collection('messages')
-        .orderBy('createdAt', descending: true)
-        .limit(30)
-        .snapshots();
-  }
-
   @override
   void initState() {
     super.initState();
-    loadInitial();
-    _listenerChat = listeningChat(chatId: widget.chatId);
+    // loadInitial();
+    _listenerChat = MessageHandlers().listeningChat(chatId: widget.chatId);
   }
 
   @override
@@ -87,8 +88,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(title: Text("Chat")),
+        backgroundColor: Theme.of(context).primaryColorLight,
+
         body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-          // initialData: initialSnap.data,
+          // initialData: iniatiator,
           stream: _listenerChat,
           builder: (context, snapshot) {
             if (snapshot.hasError) {
@@ -107,19 +110,30 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   .map((d) {
                     final data = d.data();
 
-                    print('TIME: ${data['createdAt']}');
+                    if (data['type'] == 'file') {
+                      return ImageMessage(
+                        id: d.id,
+                        authorId: data['senderId'],
+                        createdAt: data['createdAt'] == null
+                            ? DateTime.now()
+                            : (data['createdAt'] is String
+                                  ? DateTime.parse(data['createdAt'])
+                                  : (data['createdAt'] as Timestamp).toDate()),
+                        source: data['text'],
+                      );
+                    } else {
+                      return TextMessage(
+                        id: d.id,
+                        authorId: data['senderId'] as String,
+                        createdAt: data['createdAt'] == null
+                            ? DateTime.now()
+                            : (data['createdAt'] is String
+                                  ? DateTime.parse(data['createdAt'])
+                                  : (data['createdAt'] as Timestamp).toDate()),
 
-                    return TextMessage(
-                      id: d.id,
-                      authorId: data['senderId'] as String,
-                      createdAt: data['createdAt'] == null
-                          ? DateTime.now()
-                          : (data['createdAt'] is String
-                                ? DateTime.parse(data['createdAt'])
-                                : (data['createdAt'] as Timestamp).toDate()),
-
-                      text: (data['text'] ?? '') as String,
-                    );
+                        text: (data['text'] ?? '') as String,
+                      );
+                    }
                   })
                   .toList()
                   .reversed
@@ -143,21 +157,51 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 Expanded(
                   child: Chat(
                     chatController: _chatController,
-                    // builders: Builders(
-                    //   textMessageBuilder:
-                    //       (
-                    //         context,
-                    //         message,
-                    //         index, {
-                    //         required bool isSentByMe,
-                    //         MessageGroupStatus? groupStatus,
-                    //       }) => FlyerChatTextMessage(
-                    //         message: message,
-                    //         index: index,
-                    //       ),
-                    // ),
-                    currentUserId: widget.user.id,
+                    builders: Builders(
+                      textMessageBuilder:
+                          (
+                            context,
+                            message,
+                            index, {
+                            required bool isSentByMe,
+                            MessageGroupStatus? groupStatus,
+                          }) => FlyerChatTextMessage(
+                            message: message,
+                            index: index,
+                            receivedBackgroundColor: Theme.of(
+                              context,
+                            ).primaryColorLight,
+                          ),
 
+                      imageMessageBuilder:
+                          (
+                            context,
+                            message,
+                            index, {
+                            required bool isSentByMe,
+                            MessageGroupStatus? groupStatus,
+                          }) => FlyerChatImageMessage(
+                            message: message,
+                            index: index,
+                          ),
+                    ),
+                    currentUserId: widget.user.id,
+                    onAttachmentTap: () async {
+                      final XFile? image = await _picker.pickImage(
+                        source: ImageSource.gallery,
+                        imageQuality: 85,
+                      );
+
+                      if (image == null) return;
+
+                      MessageFunctions().sendMessage2(
+                        chatId: widget.chatId,
+                        senderId: widget.user.id,
+                        text:
+                            'https://randomimageurl.com/assets/images/local/20260103_0519_Random%20Natural%20Landscape_simple_compose_01ke205qahfmftrexg9rs7svjn.png',
+                        type: 'file',
+                      );
+                    },
                     onMessageSend: (text) async {
                       // print('replying message to send: $_replyingTo');
 
