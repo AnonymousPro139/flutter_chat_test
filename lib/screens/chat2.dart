@@ -32,11 +32,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen2> {
   types.TextMessage? _replyingTo;
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _sub;
   bool _initialized = false;
-  bool needsFullRebuild = false;
 
   final Map<String, Message> _cacheById = {};
-  final List<String> _orderedIds =
-      []; // newest first or oldest first — pick one
+  final List<String> _orderedIds = [];
 
   @override
   void initState() {
@@ -45,7 +43,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen2> {
     _sub = MessageHandlers().listeningChat(chatId: widget.chatId).listen((
       snapshot,
     ) {
-      print("DOCC LENGTH!: ${snapshot.docChanges.length}");
+      print(
+        "DOCC LENGTH!: ${snapshot.docChanges.length} ${snapshot.docs.length}",
+      );
 
       // First event is often a full batch of "added" docs.
       if (!_initialized) {
@@ -146,36 +146,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen2> {
       //     animated: false, // keeps SliverAnimatedList stable
       //   );
       // }
-
-      // final msgs = snapshot.docs
-      //     .map((d) {
-      //       final data = d.data();
-
-      //       final createdAt = data['createdAt'] is Timestamp
-      //           ? (data['createdAt'] as Timestamp).toDate()
-      //           : (data['createdAt'] is String
-      //                 ? DateTime.parse(data['createdAt']).toUtc()
-      //                 : DateTime.fromMillisecondsSinceEpoch(0, isUtc: true));
-
-      //       if (data['type'] == 'file') {
-      //         return ImageMessage(
-      //           id: d.id,
-      //           authorId: (data['senderId'] ?? '').toString(),
-      //           createdAt: createdAt,
-      //           source: (data['text'] ?? '').toString(),
-      //         );
-      //       } else {
-      //         return TextMessage(
-      //           id: d.id,
-      //           authorId: (data['senderId'] ?? '').toString(),
-      //           createdAt: createdAt,
-      //           text: (data['text'] ?? '').toString(),
-      //         );
-      //       }
-      //     })
-      //     .toList()
-      //     .reversed
-      //     .toList();
 
       // Update controller OUTSIDE of build.
       // _chatController.setMessages(msgs, animated: false);

@@ -19,6 +19,7 @@ class HomeScreen2 extends ConsumerStatefulWidget {
 
 class _HomeScreenState2 extends ConsumerState<HomeScreen2> {
   late final Stream<QuerySnapshot<Map<String, dynamic>>> _inboxStream;
+  bool _initialized = false;
 
   // avoid to recreate stream on every build, create it once in initState and use the variable in StreamBuilder
   @override

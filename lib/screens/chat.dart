@@ -70,6 +70,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     super.initState();
     // loadInitial();
     _listenerChat = MessageHandlers().listeningChat(chatId: widget.chatId);
+
   }
 
   @override

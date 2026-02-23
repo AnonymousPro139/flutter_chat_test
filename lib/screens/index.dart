@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:test_firebase/riverpod/index.dart';
-import 'package:test_firebase/screens/home2.dart';
+import 'package:test_firebase/screens/home3.dart';
 import 'package:test_firebase/screens/login.dart';
 
 class AuthGate extends ConsumerWidget {
@@ -17,7 +17,7 @@ class AuthGate extends ConsumerWidget {
       error: (e, _) => Scaffold(body: Center(child: Text("Heyyyy! Error: $e"))),
       data: (user) {
         if (user == null) return const LoginScreen();
-        return HomeScreen2(user: user);
+        return HomeScreen3(user: user);
       },
     );
   }
