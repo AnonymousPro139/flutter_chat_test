@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:test_firebase/firestore/services/auth/index.dart';
 import 'package:test_firebase/riverpod/index.dart';
+import 'package:test_firebase/screens/otp.dart';
 import 'package:test_firebase/screens/register.dart';
 
 class LoginScreen extends ConsumerWidget {
@@ -42,6 +44,24 @@ class LoginScreen extends ConsumerWidget {
               );
             },
             child: Text("Go to Register"),
+          ),
+
+          ElevatedButton(
+            onPressed: () async {
+              String returnedId = await Auth().sendOtp('+97699737003');
+              print("hhaha sda ${returnedId}");
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => OtpScreen(
+                    phoneNumber: "+97699737003",
+                    verificationId: returnedId,
+                  ),
+                ),
+              );
+            },
+            child: Text("send OTP"),
           ),
         ],
       ),

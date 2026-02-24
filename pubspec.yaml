@@ -42,6 +42,7 @@ dependencies:
   flutter_riverpod: ^3.2.1
   flyer_chat_image_message: ^2.3.0
   image_picker: ^1.2.1
+  firebase_auth: ^6.1.4
 
 dev_dependencies:
   flutter_test:

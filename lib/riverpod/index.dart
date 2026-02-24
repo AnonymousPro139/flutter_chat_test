@@ -25,6 +25,23 @@ class AuthController extends Notifier<AsyncValue<AppUser?>> {
     });
   }
 
+  Future<void> checkLogin() async {
+    state = const AsyncValue.loading();
+
+    state = await AsyncValue.guard(() async {
+      final user = await Auth().userChecker();
+
+      final test = user?['id'];
+      print('USERRR: ${user} ${test}');
+
+      if (user != null && user['id'] != null) {
+        return AppUser(id: user['id'], phone: user['phone']);
+      } else {
+        return AppUser(id: "1234", phone: "MOCKUSER");
+      }
+    });
+  }
+
   void logout() {
     state = const AsyncValue.data(null);
   }

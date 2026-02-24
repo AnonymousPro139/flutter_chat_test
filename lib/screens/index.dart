@@ -11,12 +11,19 @@ class AuthGate extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authControllerProvider);
 
+    ref.listen(authControllerProvider, (previous, next) {
+      print("*** State Changed from $previous to $next");
+    });
+
     return auth.when(
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (e, _) => Scaffold(body: Center(child: Text("Heyyyy! Error: $e"))),
       data: (user) {
+        print('AUTHGATE USER: ${user}');
+
         if (user == null) return const LoginScreen();
+
         return HomeScreen3(user: user);
       },
     );
