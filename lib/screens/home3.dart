@@ -30,7 +30,7 @@ class _HomeScreenState2 extends ConsumerState<HomeScreen3> {
   @override
   void initState() {
     super.initState();
-    _initAndListen();
+    // _initAndListen();
   }
 
   Future<void> _initAndListen() async {

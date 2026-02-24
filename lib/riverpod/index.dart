@@ -1,5 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:test_firebase/firestore/services/auth/index.dart';
+import 'package:test_firebase/firestore/services/index.dart';
+import 'package:test_firebase/firestore/services/message/handlers.dart';
 import 'package:test_firebase/models/user.dart';
 
 class AuthController extends Notifier<AsyncValue<AppUser?>> {
@@ -47,5 +50,35 @@ class AuthController extends Notifier<AsyncValue<AppUser?>> {
   }
 }
 
+final inboxProvider =
+    StreamProvider.family<
+      List<QueryDocumentSnapshot<Map<String, dynamic>>>,
+      String
+    >((ref, userId) {
+      // Use your existing handler, but ensure it returns a Stream with .orderBy()
+      // Sorting at the database level is much faster than sorting in Dart.
+      // return FirestoreService().firestore
+      //     .collection('chats') // or whatever your collection is
+      //     .where('participants', arrayContains: userId)
+      //     .orderBy(
+      //       'lastMessageAt',
+      //       descending: true,
+      //     ) // Database handles sorting
+      //     .snapshots()
+      //     .map((snapshot) => snapshot.docs);
+
+      // return MessageHandlers()
+      //     .listeningInbox(myId: userId)
+      //     .map((snapshot) => snapshot.docs);
+
+      return FirestoreService().firestore
+          .collection('users')
+          .doc(userId)
+          .collection('chatRefs')
+          .orderBy('lastMessageAt', descending: true)
+          .limit(20)
+          .snapshots()
+          .map((snapshot) => snapshot.docs);
+    });
 final authControllerProvider =
     NotifierProvider<AuthController, AsyncValue<AppUser?>>(AuthController.new);
