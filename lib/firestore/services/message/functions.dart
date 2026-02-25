@@ -8,6 +8,8 @@ class MessageFunctions extends FirestoreService {
     String type = "dm",
     String title = '',
   }) async {
+
+    
     final chatId = chatIdForUsers(uid1, uid2);
 
     final chatRef = firestore.collection('chats').doc(chatId);

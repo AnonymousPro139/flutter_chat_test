@@ -129,8 +129,6 @@ class Auth extends FirestoreService {
 
     final doc = await firestore.collection('users').doc(user.uid).get();
 
-    print("mydoccc: ${doc} ${doc.exists}");
-
     if (doc.exists) {
       // User already has a profile, go to Home
       return {'id': user.uid, 'phone': user.phoneNumber};
@@ -146,24 +144,58 @@ class Auth extends FirestoreService {
   Future<void> createUserProfile(String name) async {
     final user = FirebaseAuth.instance.currentUser;
 
+    // if (user != null) {
+    //   // 1. Reference the 'users' collection and specifically the document named with the UID
+    //   final userRef = firestore.collection('users').doc(user.uid);
+
+    //   // 2. Use .set() to create or update the document
+    //   await userRef.set(
+    //     {
+    //       'uid': user.uid,
+    //       'phone': user.phoneNumber, // Automatically comes from Auth
+    //       'displayName': name,
+    //       'createdAt':
+    //           FieldValue.serverTimestamp(), // Better than using phone time
+    //       'role': 'user',
+    //     },
+    //     SetOptions(merge: true),
+    //   ); // Use merge: true to avoid overwriting existing data if they log in again
+
+    //   print("User document created/updated for UID: ${user.uid}");
+    // }
+
     if (user != null) {
-      // 1. Reference the 'users' collection and specifically the document named with the UID
-      final userRef = firestore.collection('users').doc(user.uid);
-
-      // 2. Use .set() to create or update the document
-      await userRef.set(
-        {
-          'uid': user.uid,
-          'phone': user.phoneNumber, // Automatically comes from Auth
-          'displayName': name,
-          'createdAt':
-              FieldValue.serverTimestamp(), // Better than using phone time
-          'role': 'user',
-        },
-        SetOptions(merge: true),
-      ); // Use merge: true to avoid overwriting existing data if they log in again
-
-      print("User document created/updated for UID: ${user.uid}");
+      await createNewUser(user);
     }
+  }
+
+  Future<void> createNewUser(User firebaseUser) async {
+    final batch = firestore.batch();
+
+    // 1. Private Doc
+    final privateRef = firestore.collection('users').doc(firebaseUser.uid);
+
+    batch.set(privateRef, {
+      'uid': firebaseUser.uid,
+      'phone': firebaseUser.phoneNumber, // Automatically comes from Auth
+      'displayName': firebaseUser.displayName,
+      'createdAt': FieldValue.serverTimestamp(), // Better than using phone time
+      'role': 'user',
+      'photoUrl': firebaseUser.photoURL,
+    });
+
+    // 2. Public Doc
+    final publicRef = firestore
+        .collection('public_profiles')
+        .doc(firebaseUser.uid);
+
+    batch.set(publicRef, {
+      'uid': firebaseUser.uid,
+      'displayName': firebaseUser.displayName,
+      'phone': firebaseUser.phoneNumber,
+      'photoUrl': firebaseUser.photoURL,
+    });
+
+    await batch.commit();
   }
 }

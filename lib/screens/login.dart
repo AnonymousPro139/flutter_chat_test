@@ -10,17 +10,8 @@ class LoginScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final phoneController = TextEditingController(text: '99889988');
-    final passwordController = TextEditingController(text: "123");
-
-    void _login() {
-      final phone = phoneController.text;
-      final password = passwordController.text;
-
-      ref
-          .read(authControllerProvider.notifier)
-          .login(phone: phone, password: password);
-    }
+    final phoneController = TextEditingController(text: '+97688731627');
+    // final passwordController = TextEditingController(text: "123");
 
     return Scaffold(
       appBar: AppBar(title: Text("Login")),
@@ -30,12 +21,11 @@ class LoginScreen extends ConsumerWidget {
             decoration: InputDecoration(labelText: "Phone"),
             controller: phoneController,
           ),
-          TextField(
-            decoration: InputDecoration(labelText: "Password"),
-            controller: passwordController,
-            obscureText: true,
-          ),
-          ElevatedButton(onPressed: _login, child: Text("Login")),
+          // TextField(
+          //   decoration: InputDecoration(labelText: "Password"),
+          //   controller: passwordController,
+          //   obscureText: true,
+          // ),
           ElevatedButton(
             onPressed: () {
               Navigator.push(
@@ -48,14 +38,13 @@ class LoginScreen extends ConsumerWidget {
 
           ElevatedButton(
             onPressed: () async {
-              String returnedId = await Auth().sendOtp('+97699737003');
-              print("hhaha sda ${returnedId}");
+              String returnedId = await Auth().sendOtp(phoneController.text);
 
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => OtpScreen(
-                    phoneNumber: "+97699737003",
+                    phoneNumber: phoneController.text,
                     verificationId: returnedId,
                   ),
                 ),

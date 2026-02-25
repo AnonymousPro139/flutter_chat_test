@@ -31,6 +31,8 @@ class _PhoneSearchBottomSheetState
       phoneController.text,
     );
 
+    print("RESULT ${result}");
+
     setState(() {
       resultUser = result;
     });
@@ -86,7 +88,7 @@ class _PhoneSearchBottomSheetState
                 keyboardType: TextInputType.phone,
                 decoration: InputDecoration(
                   labelText: "Phone Number",
-                  hintText: "+1 234 567 890",
+                  hintText: "+976 99012345",
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
