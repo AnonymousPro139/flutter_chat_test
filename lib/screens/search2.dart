@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:test_firebase/firestore/services/message/functions.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:test_firebase/models/user.dart';
-import 'package:test_firebase/widgets/ChatElement.dart';
 
 class GlobalSearchScreen extends StatefulWidget {
   const GlobalSearchScreen({super.key});
@@ -11,9 +11,52 @@ class GlobalSearchScreen extends StatefulWidget {
 }
 
 class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
+  List<Contact> _allContacts = []; // Original list from phone
+  List<Contact> _filteredContacts = [];
+  bool _isLoading = true;
+
   final TextEditingController _searchController = TextEditingController();
   List<AppUser> _searchResults = [];
   bool _isSearching = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchContacts();
+  }
+
+  Future<void> _fetchContacts() async {
+    // 1. Request Permission
+    final status = await Permission.contacts.request();
+
+    if (status.isGranted) {
+      // 2. Fetch contacts with high-res thumbnails and phone numbers
+      final contacts = await FlutterContacts.getContacts(
+        withProperties: true,
+        withPhoto: true,
+      );
+
+      setState(() {
+        _allContacts = contacts;
+        _filteredContacts = contacts;
+        _isLoading = false;
+      });
+    } else {
+      setState(() => _isLoading = false);
+      // Handle denied permission (e.g., show a dialog)
+    }
+  }
+
+  void _searchContacts(String query) {
+    final results = _allContacts.where((contact) {
+      final name = contact.displayName.toLowerCase();
+      return name.contains(query.toLowerCase());
+    }).toList();
+
+    setState(() {
+      _filteredContacts = results;
+    });
+  }
 
   // Mock function to simulate a database/Firebase search
   void _performSearch(String query) async {
@@ -62,7 +105,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
             child: SearchBar(
               controller: _searchController,
               hintText: "Search by phone",
-              onChanged: _performSearch,
+              onChanged: _searchContacts,
               leading: const Icon(Icons.search),
               trailing: [
                 if (_searchController.text.isNotEmpty)
@@ -70,7 +113,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                     icon: const Icon(Icons.clear),
                     onPressed: () {
                       _searchController.clear();
-                      _performSearch('');
+                      _searchContacts('');
                     },
                   ),
               ],
@@ -84,12 +127,47 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
           ),
 
           // 2. Results Area
+          // Expanded(
+          //   child: _isSearching
+          //       ? const Center(child: CircularProgressIndicator())
+          //       : _searchResults.isEmpty
+          //       ? _buildEmptyState()
+          //       : _buildResultsList(),
+          // ),
           Expanded(
-            child: _isSearching
+            child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : _searchResults.isEmpty
-                ? _buildEmptyState()
-                : _buildResultsList(),
+                : _filteredContacts.isEmpty
+                ? const Center(child: Text("No contacts found"))
+                : ListView.builder(
+                    itemCount: _filteredContacts.length,
+                    itemBuilder: (context, index) {
+                      final contact = _filteredContacts[index];
+                      // Safely get the first phone number
+                      String phone = contact.phones.isNotEmpty
+                          ? contact.phones.first.number
+                          : "No number";
+
+                      return ListTile(
+                        leading: (contact.photo != null)
+                            ? CircleAvatar(
+                                backgroundImage: MemoryImage(contact.photo!),
+                              )
+                            : CircleAvatar(child: Text(contact.displayName[0])),
+                        title: Text(contact.displayName),
+                        subtitle: Text(phone),
+                        trailing: IconButton(
+                          icon: const Icon(
+                            Icons.person_add_alt_1,
+                            color: Colors.deepPurple,
+                          ),
+                          onPressed: () {
+                            // Logic to invite or add to chat
+                          },
+                        ),
+                      );
+                    },
+                  ),
           ),
         ],
       ),

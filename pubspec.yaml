@@ -43,6 +43,8 @@ dependencies:
   flyer_chat_image_message: ^2.3.0
   image_picker: ^1.2.1
   firebase_auth: ^6.1.4
+  flutter_contacts: ^1.1.9+2
+  permission_handler: ^12.0.1
 
 dev_dependencies:
   flutter_test:
