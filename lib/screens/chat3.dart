@@ -7,7 +7,7 @@ import 'package:flyer_chat_text_message/flyer_chat_text_message.dart';
 import 'package:flyer_chat_image_message/flyer_chat_image_message.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:test_firebase/firestore/services/message/functions.dart';
-import 'package:test_firebase/riverpod/index.dart';
+import 'package:test_firebase/riverpod/providers.dart';
 import 'package:test_firebase/widgets/replyPreview.dart';
 import 'package:test_firebase/models/user.dart';
 
@@ -169,7 +169,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen3> {
 
     // TODO: Upload `image.path` to Firebase Storage first to get a real URL!
     // Using a hardcoded URL for now.
-    MessageFunctions().sendMessage2(
+    MessageFunctions().sendMessage(
       chatId: widget.chatId,
       senderId: widget.user.id,
       text:
@@ -179,7 +179,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen3> {
   }
 
   Future<void> _handleMessageSend(String text) async {
-    MessageFunctions().sendMessage2(
+    MessageFunctions().sendMessage(
       chatId: widget.chatId,
       senderId: widget.user.id,
       text: text,

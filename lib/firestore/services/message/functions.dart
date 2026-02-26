@@ -8,9 +8,7 @@ class MessageFunctions extends FirestoreService {
     String type = "dm",
     String title = '',
   }) async {
-
-    
-    final chatId = chatIdForUsers(uid1, uid2);
+    final chatId = genereateChatIdForUsers(uid1, uid2);
 
     final chatRef = firestore.collection('chats').doc(chatId);
 
@@ -24,37 +22,12 @@ class MessageFunctions extends FirestoreService {
     return chatId;
   }
 
-  String chatIdForUsers(String uid1, String uid2) {
+  String genereateChatIdForUsers(String uid1, String uid2) {
     final ids = [uid1, uid2]..sort();
     return '${ids[0]}_${ids[1]}';
   }
 
-  Future<void> sendMessage({
-    required String chatId,
-    required String senderId,
-    required String text,
-  }) async {
-    final chatRef = firestore.collection('chats').doc(chatId);
-    final msgRef = chatRef.collection('messages').doc(); // auto id
-
-    final now = FieldValue.serverTimestamp();
-
-    final batch = firestore.batch();
-
-    batch.set(msgRef, {'senderId': senderId, 'text': text, 'createdAt': now});
-
-    // Eniig cloud function-r oorchluulj bga
-    // End uurchluh, cloud function-r oorchluuleh 2n dawuu sul tal ?
-
-    // batch.set(chatRef, {
-    //   'lastMessage': text,
-    //   'lastMessageTime': now,
-    // }, SetOptions(merge: true));
-
-    await batch.commit();
-  }
-
-  void sendMessage2({
+  void sendMessage({
     required String chatId,
     required String senderId,
     required String text,

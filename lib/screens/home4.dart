@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:test_firebase/models/user.dart';
-import 'package:test_firebase/riverpod/index.dart';
-import 'package:test_firebase/screens/search.dart';
+import 'package:test_firebase/riverpod/providers.dart';
 import 'package:test_firebase/widgets/ChatElement.dart';
 
 class HomeScreen4 extends ConsumerWidget {
@@ -11,13 +10,51 @@ class HomeScreen4 extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Watch the provider. Riverpod handles loading/error states for you.
     final inboxAsync = ref.watch(inboxProvider(user.id));
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text("Home 4 Chats (${user.phone} ${user.id})"),
+        // centerTitle: false,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 6,
+              ), // Your Padding
+              decoration: BoxDecoration(
+                // color: Theme.of(
+                //   context,
+                // ).colorScheme.inversePrimary, // Your Background Color
+                // borderRadius: BorderRadius.circular(12), // Your Rounded Corners
+              ),
+              child: Row(
+                mainAxisAlignment: .spaceBetween,
+                children: [
+                  Text(
+                    "Urtuu",
+                    style: TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.5,
+                      color: Colors.black,
+                    ),
+                  ),
+                  Text(
+                    "${user.phone}",
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.primary,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
       body: inboxAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -44,19 +81,6 @@ class HomeScreen4 extends ConsumerWidget {
           );
         },
       ),
-      floatingActionButton: _buildSearchButton(context),
-    );
-  }
-
-  Widget _buildSearchButton(BuildContext context) {
-    return FloatingActionButton(
-      onPressed: () => showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (context) => const PhoneSearchBottomSheet(),
-      ),
-      child: const Icon(Icons.search),
     );
   }
 }

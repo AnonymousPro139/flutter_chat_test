@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:test_firebase/riverpod/index.dart';
+import 'package:test_firebase/screens/bottom.dart';
 import 'package:test_firebase/screens/home3.dart';
 import 'package:test_firebase/screens/home4.dart';
 import 'package:test_firebase/screens/login.dart';
@@ -19,7 +20,8 @@ class AuthGate extends ConsumerWidget {
       data: (user) {
         if (user == null) return const LoginScreen();
 
-        return HomeScreen4(user: user);
+        // return HomeScreen4(user: user);
+        return BottomScreen();
       },
     );
   }

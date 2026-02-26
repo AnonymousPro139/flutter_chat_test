@@ -70,7 +70,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     super.initState();
     // loadInitial();
     _listenerChat = MessageHandlers().listeningChat(chatId: widget.chatId);
-
   }
 
   @override
@@ -195,7 +194,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
                       if (image == null) return;
 
-                      MessageFunctions().sendMessage2(
+                      MessageFunctions().sendMessage(
                         chatId: widget.chatId,
                         senderId: widget.user.id,
                         text:
@@ -212,7 +211,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       //   widget.otherUid,
                       // );
 
-                      MessageFunctions().sendMessage2(
+                      MessageFunctions().sendMessage(
                         chatId: widget.chatId,
                         senderId: widget.user.id,
                         text: text,

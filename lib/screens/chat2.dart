@@ -247,7 +247,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen2> {
                   );
                   if (image == null) return;
 
-                  MessageFunctions().sendMessage2(
+                  MessageFunctions().sendMessage(
                     chatId: widget.chatId,
                     senderId: widget.user.id,
                     text:
@@ -256,7 +256,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen2> {
                   );
                 },
                 onMessageSend: (text) async {
-                  MessageFunctions().sendMessage2(
+                  MessageFunctions().sendMessage(
                     chatId: widget.chatId,
                     senderId: widget.user.id,
                     text: text,

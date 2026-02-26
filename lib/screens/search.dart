@@ -4,7 +4,6 @@ import 'package:test_firebase/firestore/services/message/functions.dart';
 import 'package:test_firebase/firestore/services/user/index.dart';
 import 'package:test_firebase/models/user.dart';
 import 'package:test_firebase/riverpod/index.dart';
-import 'package:test_firebase/screens/chat.dart';
 import 'package:test_firebase/screens/chat2.dart';
 
 class PhoneSearchBottomSheet extends ConsumerStatefulWidget {
@@ -119,8 +118,6 @@ class _PhoneSearchBottomSheetState
                       loggedUser!.id,
                       resultUser!.id,
                     ),
-
-                    print("Created chat ID: $createdChatId"),
 
                     // navigate to chat screen with this chat ID
                     Navigator.push(
