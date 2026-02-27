@@ -1,16 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_contacts/flutter_contacts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:test_firebase/firestore/services/message/functions.dart';
+import 'package:test_firebase/firestore/services/user/index.dart';
 import 'package:test_firebase/models/user.dart';
+import 'package:test_firebase/riverpod/index.dart';
+import 'package:test_firebase/screens/chat3.dart';
+import 'package:test_firebase/widgets/ChatElement.dart';
 
-class GlobalSearchScreen extends StatefulWidget {
+class GlobalSearchScreen extends ConsumerStatefulWidget {
   const GlobalSearchScreen({super.key});
 
   @override
-  State<GlobalSearchScreen> createState() => _GlobalSearchScreenState();
+  ConsumerState<GlobalSearchScreen> createState() => _GlobalSearchScreenState();
 }
 
-class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
+class _GlobalSearchScreenState extends ConsumerState<GlobalSearchScreen> {
+  AppUser? resultUser;
   List<Contact> _allContacts = []; // Original list from phone
   List<Contact> _filteredContacts = [];
   bool _isLoading = true;
@@ -88,8 +95,24 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
     });
   }
 
+  void search() async {
+    setState(() => _isSearching = true);
+
+    final result = await UserFirestoreService().searchUserByPhone(
+      _searchController.text,
+    );
+
+    setState(() {
+      resultUser = result;
+      _isSearching = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authControllerProvider);
+    final loggedUser = authState.value;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -105,7 +128,9 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
             child: SearchBar(
               controller: _searchController,
               hintText: "Search by phone",
-              onChanged: _searchContacts,
+              //onChanged: _searchContacts,
+              // onChanged: _performSearch,
+              onTap: search,
               leading: const Icon(Icons.search),
               trailing: [
                 if (_searchController.text.isNotEmpty)
@@ -113,7 +138,8 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                     icon: const Icon(Icons.clear),
                     onPressed: () {
                       _searchController.clear();
-                      _searchContacts('');
+                      // _searchContacts('');
+                      // _performSearch('');
                     },
                   ),
               ],
@@ -127,48 +153,48 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
           ),
 
           // 2. Results Area
-          // Expanded(
-          //   child: _isSearching
-          //       ? const Center(child: CircularProgressIndicator())
-          //       : _searchResults.isEmpty
-          //       ? _buildEmptyState()
-          //       : _buildResultsList(),
-          // ),
           Expanded(
-            child: _isLoading
+            child: _isSearching
                 ? const Center(child: CircularProgressIndicator())
-                : _filteredContacts.isEmpty
-                ? const Center(child: Text("No contacts found"))
-                : ListView.builder(
-                    itemCount: _filteredContacts.length,
-                    itemBuilder: (context, index) {
-                      final contact = _filteredContacts[index];
-                      // Safely get the first phone number
-                      String phone = contact.phones.isNotEmpty
-                          ? contact.phones.first.number
-                          : "No number";
-
-                      return ListTile(
-                        leading: (contact.photo != null)
-                            ? CircleAvatar(
-                                backgroundImage: MemoryImage(contact.photo!),
-                              )
-                            : CircleAvatar(child: Text(contact.displayName[0])),
-                        title: Text(contact.displayName),
-                        subtitle: Text(phone),
-                        trailing: IconButton(
-                          icon: const Icon(
-                            Icons.person_add_alt_1,
-                            color: Colors.deepPurple,
-                          ),
-                          onPressed: () {
-                            // Logic to invite or add to chat
-                          },
-                        ),
-                      );
-                    },
-                  ),
+                : resultUser?.phone == null
+                ? _buildEmptyState()
+                : _buildResultUser(context, loggedUser, resultUser),
           ),
+          // Expanded(
+          //   child: _isLoading
+          //       ? const Center(child: CircularProgressIndicator())
+          //       : _filteredContacts.isEmpty
+          //       ? const Center(child: Text("No contacts found"))
+          //       : ListView.builder(
+          //           itemCount: _filteredContacts.length,
+          //           itemBuilder: (context, index) {
+          //             final contact = _filteredContacts[index];
+          //             // Safely get the first phone number
+          //             String phone = contact.phones.isNotEmpty
+          //                 ? contact.phones.first.number
+          //                 : "No number";
+
+          //             return ListTile(
+          //               leading: (contact.photo != null)
+          //                   ? CircleAvatar(
+          //                       backgroundImage: MemoryImage(contact.photo!),
+          //                     )
+          //                   : CircleAvatar(child: Text(contact.displayName[0])),
+          //               title: Text(contact.displayName),
+          //               subtitle: Text(phone),
+          //               trailing: IconButton(
+          //                 icon: const Icon(
+          //                   Icons.person_add_alt_1,
+          //                   color: Colors.deepPurple,
+          //                 ),
+          //                 onPressed: () {
+          //                   // Logic to invite or add to chat
+          //                 },
+          //               ),
+          //             );
+          //           },
+          //         ),
+          // ),
         ],
       ),
     );
@@ -253,6 +279,51 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildResultUser(context, loggedUser, resultUser) {
+    var createdChatId = "";
+
+    return ListTile(
+      leading: CircleAvatar(
+        radius: 22,
+        backgroundImage: null,
+        child: Text(resultUser.phone.toUpperCase()),
+      ),
+      title: Text(
+        resultUser.phone,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      subtitle: Text(
+        'id: ${resultUser.id}',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          fontSize: 10,
+          color: Color.fromARGB(255, 0, 0, 0),
+        ),
+      ),
+      trailing: FilledButton(
+        onPressed: () async {
+          // Navigate to Chat
+
+          createdChatId = await MessageFunctions().createOrGetChat(
+            loggedUser!.id,
+            resultUser!.id,
+          );
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  ChatScreen3(chatId: createdChatId, user: loggedUser),
+            ),
+          );
+        },
+        child: const Text("Message"),
+      ),
     );
   }
 

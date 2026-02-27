@@ -8,6 +8,69 @@ class HomeScreen4 extends ConsumerWidget {
   final AppUser user;
   const HomeScreen4({super.key, required this.user});
 
+  // --- Modal Function ---
+  void _showCreateGroupModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled:
+          true, // Allows the modal to resize when keyboard appears
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(
+              context,
+            ).viewInsets.bottom, // Lifts modal above keyboard
+            left: 20,
+            right: 20,
+            top: 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Create group chat",
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                decoration: InputDecoration(
+                  labelText: "Group Name",
+                  prefixIcon: const Icon(Icons.group_add),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: () {
+                    // Logic to create group in Firebase
+                    Navigator.pop(context);
+                  },
+                  child: const Text("Create Group"),
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final inboxAsync = ref.watch(inboxProvider(user.id));
@@ -30,10 +93,10 @@ class HomeScreen4 extends ConsumerWidget {
                 // borderRadius: BorderRadius.circular(12), // Your Rounded Corners
               ),
               child: Row(
-                mainAxisAlignment: .spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    "Urtuu",
+                    "Home",
                     style: TextStyle(
                       fontSize: 19,
                       fontWeight: FontWeight.bold,
@@ -49,6 +112,14 @@ class HomeScreen4 extends ConsumerWidget {
                       color: Theme.of(context).colorScheme.primary,
                       letterSpacing: 0.5,
                     ),
+                  ),
+
+                  IconButton(
+                    icon: const Icon(Icons.add, color: Colors.black),
+                    onPressed: () => _showCreateGroupModal(context),
+                    constraints:
+                        const BoxConstraints(), // Removes default padding
+                    padding: EdgeInsets.zero,
                   ),
                 ],
               ),
