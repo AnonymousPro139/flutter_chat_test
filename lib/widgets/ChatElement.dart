@@ -4,12 +4,13 @@ import 'package:test_firebase/models/user.dart';
 import 'package:test_firebase/screens/chat.dart';
 import 'package:test_firebase/screens/chat2.dart';
 import 'package:test_firebase/screens/chat3.dart';
-
+import 'package:test_firebase/screens/chat4.dart';
 
 class ChatElement extends StatelessWidget {
   const ChatElement({
     super.key,
     required this.chatId,
+    required this.title,
     required this.lastMessage,
     required this.lastMessageAt,
     required this.user,
@@ -17,6 +18,8 @@ class ChatElement extends StatelessWidget {
 
   final AppUser user;
   final String chatId;
+  final String title;
+
   final String lastMessage;
   final dynamic lastMessageAt; // Timestamp? (Firestore)
 
@@ -37,14 +40,15 @@ class ChatElement extends StatelessWidget {
       leading: CircleAvatar(
         radius: 22,
         backgroundImage: null,
-        child: chatId.isNotEmpty ? Text(chatId[0].toUpperCase()) : null,
+        child: title.isNotEmpty ? Text(title.toUpperCase()) : null,
       ),
-      title: Text(chatId, maxLines: 1, overflow: TextOverflow.ellipsis),
+      title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
       subtitle: Text(
         lastMessage.isEmpty ? 'No messages yet' : lastMessage,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
+
       trailing: Text(
         _formatTime(lastMessageAt),
         style: Theme.of(context).textTheme.bodySmall,
@@ -53,7 +57,8 @@ class ChatElement extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => ChatScreen3(user: user, chatId: chatId),
+            builder: (_) =>
+                ChatScreen4(user: user, title: title, chatId: chatId),
           ),
         );
       },

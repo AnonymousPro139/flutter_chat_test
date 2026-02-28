@@ -26,12 +26,14 @@ class MessageHandlers extends FirestoreService {
     return fetchMessagesChatQuery(chatId: chatId).get();
   }
 
+// unused
   Future<QuerySnapshot<Map<String, dynamic>>> fetchInitialInbox({
     required String myid,
   }) {
     return inboxQuery(myid: myid).get();
   }
 
+// unused
   Stream<QuerySnapshot<Map<String, dynamic>>> listeningInbox({
     required String myId,
   }) {

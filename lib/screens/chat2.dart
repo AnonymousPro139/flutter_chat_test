@@ -249,7 +249,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen2> {
 
                   MessageFunctions().sendMessage(
                     chatId: widget.chatId,
-                    senderId: widget.user.id,
+                    sender: widget.user,
                     text:
                         'https://randomimageurl.com/assets/images/local/20260103_0519_Random%20Natural%20Landscape_simple_compose_01ke205qahfmftrexg9rs7svjn.png',
                     type: 'file',
@@ -258,7 +258,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen2> {
                 onMessageSend: (text) async {
                   MessageFunctions().sendMessage(
                     chatId: widget.chatId,
-                    senderId: widget.user.id,
+                    sender: widget.user,
                     text: text,
                   );
 

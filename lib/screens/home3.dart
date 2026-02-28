@@ -175,6 +175,7 @@ class _HomeScreenState2 extends ConsumerState<HomeScreen3> {
 
           return ChatElement(
             chatId: chatId,
+            title: 'test',
             user: widget.user,
             lastMessage: chat['lastMessageText'],
             lastMessageAt: chat['lastMessageAt'],

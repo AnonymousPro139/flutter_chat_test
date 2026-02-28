@@ -8,15 +8,16 @@ import 'package:flyer_chat_image_message/flyer_chat_image_message.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:test_firebase/firestore/services/message/functions.dart';
 import 'package:test_firebase/riverpod/providers.dart';
+import 'package:test_firebase/widgets/AddParticipantsDialog.dart';
 import 'package:test_firebase/widgets/replyPreview.dart';
 import 'package:test_firebase/models/user.dart';
 
-class ChatScreen3 extends ConsumerStatefulWidget {
+class ChatScreen4 extends ConsumerStatefulWidget {
   final AppUser user;
   final String chatId;
   final String title;
 
-  const ChatScreen3({
+  const ChatScreen4({
     super.key,
     required this.user,
     required this.chatId,
@@ -24,10 +25,10 @@ class ChatScreen3 extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<ChatScreen3> createState() => _ChatScreenState();
+  ConsumerState<ChatScreen4> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends ConsumerState<ChatScreen3> {
+class _ChatScreenState extends ConsumerState<ChatScreen4> {
   final _chatController = InMemoryChatController();
   final ImagePicker _picker = ImagePicker();
   types.TextMessage? _replyingTo;
@@ -35,8 +36,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen3> {
   @override
   void initState() {
     super.initState();
-    // OPTIMIZATION: Initialize the controller once outside of the build loop
-    // so the UI doesn't "flicker" on the first load.
     _initController();
   }
 
@@ -63,10 +62,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen3> {
     ref.listen<AsyncValue<List<types.Message>>>(
       chatMessagesProvider(widget.chatId),
       (previous, next) {
-        // next.whenData((messages) {
-        //   _chatController.setMessages(messages, animated: true);
-        // });
-
         if (next is AsyncData<List<types.Message>>) {
           // animated: true allows the chat UI to slide new messages in nicely
           _chatController.setMessages(next.value, animated: true);
@@ -82,8 +77,58 @@ class _ChatScreenState extends ConsumerState<ChatScreen3> {
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(
-          title: Text('${widget.title} id:${widget.chatId}'),
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          elevation: 0,
+          centerTitle: false,
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+          title: Row(
+            children: [
+              CircleAvatar(
+                radius: 18,
+                backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                child: Text(widget.title[0].toUpperCase()),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    "Online", // Or fetch real status
+                    style: TextStyle(fontSize: 12, color: Colors.green[600]),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.more_vert),
+              onPressed: () async {
+                // 1. Fetch your full friend list (from a provider or service)
+                // final allFriends = ref.read(friendsProvider).value ?? [];
+                final allFriends = [];
+
+                // 2. Show the dialog
+                final List<String>? selectedIds =
+                    await showDialog<List<String>>(
+                      context: context,
+                      builder: (context) => AddMembersDialog(
+                        allFriends: [],
+                        // currentParticipants: widget
+                        //     .chatParticipants, // Pass the current group list
+                        currentParticipants: [],
+                      ),
+                    );
+              },
+            ),
+          ],
         ),
         body: Column(
           children: [
@@ -113,6 +158,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen3> {
                     Center(child: Text('Error shu sda: $error')),
                 data: (_) {
                   return Chat(
+                    // theme: ChatTheme(colors: colors, typography: typography, shape: shape),
                     chatController: _chatController,
                     currentUserId: widget.user.id,
                     builders: _buildersChat(),
@@ -135,22 +181,70 @@ class _ChatScreenState extends ConsumerState<ChatScreen3> {
   }
 
   Builders _buildersChat() {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Builders(
       textMessageBuilder:
-          (context, message, index, {required isSentByMe, groupStatus}) =>
-              FlyerChatTextMessage(
-                message: message,
-                index: index,
-                sentBackgroundColor: Theme.of(
-                  context,
-                ).colorScheme.inversePrimary,
-
-                // sentBackgroundColor: Theme.of(context).primaryColorLight,
-                // sentTextStyle: TextStyle(color: Color.fromARGB(0, 0, 0, 0)),
+          (context, message, index, {required isSentByMe, groupStatus}) {
+            return FlyerChatTextMessage(
+              message: message,
+              index: index,
+              // --- Sent Message Style (Right Side) ---
+              sentBackgroundColor: colorScheme.primary,
+              sentTextStyle: const TextStyle(
+                color: Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.w400,
               ),
+              // --- Received Message Style (Left Side) ---
+              receivedBackgroundColor: const Color.fromARGB(255, 245, 240, 240),
+              receivedTextStyle: const TextStyle(
+                color: Colors.black87,
+                fontSize: 15,
+                fontWeight: FontWeight.w400,
+              ),
+            );
+          },
+      systemMessageBuilder:
+          (context, message, index, {required isSentByMe, groupStatus}) {
+            // Assuming you cast your Firestore data to Flyer's SystemMessage type
+            return Center(
+              child: Container(
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  message.text, // e.g., "John joined the group"
+                  style: const TextStyle(fontSize: 12, color: Colors.black54),
+                ),
+              ),
+            );
+          },
       imageMessageBuilder:
-          (context, message, index, {required isSentByMe, groupStatus}) =>
-              FlyerChatImageMessage(message: message, index: index),
+          (context, message, index, {required isSentByMe, groupStatus}) {
+            return Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: FlyerChatImageMessage(message: message, index: index),
+              ),
+            );
+          },
     );
   }
 

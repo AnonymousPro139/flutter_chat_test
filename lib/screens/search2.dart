@@ -255,25 +255,7 @@ class _GlobalSearchScreenState extends ConsumerState<GlobalSearchScreen> {
               ],
             ),
             trailing: FilledButton(
-              onPressed: () {
-                // Navigate to Chat
-
-                //  createdChatId = await MessageFunctions().createOrGetChat(
-                //       loggedUser!.id,
-                //       resultUser!.id,
-                //     ),
-
-                //     // navigate to chat screen with this chat ID
-                //     Navigator.push(
-                //       context,
-                //       MaterialPageRoute(
-                //         builder: (context) => ChatScreen2(
-                //           chatId: createdChatId,
-                //           user: loggedUser,
-                //         ),
-                //       ),
-                //     ),
-              },
+              onPressed: () {},
               child: const Text("Message"),
             ),
           ),
@@ -317,8 +299,11 @@ class _GlobalSearchScreenState extends ConsumerState<GlobalSearchScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) =>
-                  ChatScreen3(chatId: createdChatId, user: loggedUser),
+              builder: (context) => ChatScreen3(
+                chatId: createdChatId,
+                title: 'Chat',
+                user: loggedUser,
+              ),
             ),
           );
         },

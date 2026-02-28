@@ -196,24 +196,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
                       MessageFunctions().sendMessage(
                         chatId: widget.chatId,
-                        senderId: widget.user.id,
+                        sender: widget.user,
                         text:
                             'https://randomimageurl.com/assets/images/local/20260103_0519_Random%20Natural%20Landscape_simple_compose_01ke205qahfmftrexg9rs7svjn.png',
                         type: 'file',
                       );
                     },
                     onMessageSend: (text) async {
-                      // print('replying message to send: $_replyingTo');
-
-                      // End shaardlagagui !!!!
-                      // String chatId = await MessageFunctions().createOrGetChat(
-                      //   widget.user.id,
-                      //   widget.otherUid,
-                      // );
-
                       MessageFunctions().sendMessage(
                         chatId: widget.chatId,
-                        senderId: widget.user.id,
+                        sender: widget.user,
                         text: text,
                       );
 

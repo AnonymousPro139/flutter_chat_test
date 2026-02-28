@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:test_firebase/firestore/services/group/index.dart';
 import 'package:test_firebase/models/user.dart';
 import 'package:test_firebase/riverpod/providers.dart';
 import 'package:test_firebase/widgets/ChatElement.dart';
 
 class HomeScreen4 extends ConsumerWidget {
   final AppUser user;
-  const HomeScreen4({super.key, required this.user});
 
+  HomeScreen4({super.key, required this.user});
+  final groupNameController = TextEditingController();
   // --- Modal Function ---
   void _showCreateGroupModal(BuildContext context) {
     showModalBottomSheet(
@@ -37,6 +39,7 @@ class HomeScreen4 extends ConsumerWidget {
               ),
               const SizedBox(height: 20),
               TextField(
+                controller: groupNameController,
                 decoration: InputDecoration(
                   labelText: "Group Name",
                   prefixIcon: const Icon(Icons.group_add),
@@ -56,8 +59,14 @@ class HomeScreen4 extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  onPressed: () {
-                    // Logic to create group in Firebase
+                  onPressed: () async {
+                    var createdId = await createGroupChat(
+                      groupNameController.text,
+                      user.id,
+                    );
+
+                    print("New created group id: ${createdId}");
+
                     Navigator.pop(context);
                   },
                   child: const Text("Create Group"),
@@ -105,7 +114,7 @@ class HomeScreen4 extends ConsumerWidget {
                     ),
                   ),
                   Text(
-                    "${user.phone}",
+                    user.phone,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
@@ -144,6 +153,7 @@ class HomeScreen4 extends ConsumerWidget {
 
               return ChatElement(
                 chatId: doc.id,
+                title: data["title"],
                 user: user,
                 lastMessage: data['lastMessageText'] ?? '',
                 lastMessageAt: data['lastMessageAt'],
