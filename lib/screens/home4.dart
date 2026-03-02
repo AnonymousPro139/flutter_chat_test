@@ -157,6 +157,7 @@ class HomeScreen4 extends ConsumerWidget {
                 user: user,
                 lastMessage: data['lastMessageText'] ?? '',
                 lastMessageAt: data['lastMessageAt'],
+                
               );
             },
           );

@@ -40,3 +40,26 @@ Future<void> addUsersToGroup({
     rethrow;
   }
 }
+
+Future<void> leaveGroup(String chatId, String userId) async {
+  final db = FirestoreService().firestore;
+  final batch = db.batch();
+
+  // 1. Remove user from the main chat participants list
+  final chatRef = db.collection('chats').doc(chatId);
+  batch.update(chatRef, {
+    'participants': FieldValue.arrayRemove([userId]),
+  });
+
+  // 2. Delete the chat reference from the user's personal inbox
+  final userChatRef = db
+      .collection('users')
+      .doc(userId)
+      .collection('chatRefs')
+      .doc(chatId);
+
+  batch.delete(userChatRef);
+
+  // 3. Execute both at once
+  await batch.commit();
+}

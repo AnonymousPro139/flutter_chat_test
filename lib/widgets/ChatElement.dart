@@ -1,9 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:test_firebase/firestore/services/user/index.dart';
 import 'package:test_firebase/models/user.dart';
-import 'package:test_firebase/screens/chat.dart';
-import 'package:test_firebase/screens/chat2.dart';
-import 'package:test_firebase/screens/chat3.dart';
 import 'package:test_firebase/screens/chat4.dart';
 
 class ChatElement extends StatelessWidget {
@@ -34,6 +32,77 @@ class ChatElement extends StatelessWidget {
     return '';
   }
 
+  void _showOptionsModal(
+    BuildContext context,
+    String chatId,
+    String chatTitle,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min, // Wrap content height
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  chatTitle,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.delete_outline, color: Colors.red),
+                title: const Text(
+                  "Hide Chat",
+                  style: TextStyle(color: Colors.red),
+                ),
+                subtitle: const Text(
+                  "This will remove the chat from your list.",
+                ),
+                onTap: () async {
+                  Navigator.pop(context); // Close modal
+                  await _confirmAndHideChat(context, chatId);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.cancel_outlined),
+                title: const Text("Cancel"),
+                onTap: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _confirmAndHideChat(BuildContext context, String chatId) async {
+    try {
+      // 1. Delete only the local user's reference
+      await UserFirestoreService().hideChatForMe(user.id, chatId);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Chat hidden successfully")),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Error hiding chat: $e")));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListTile(
@@ -62,6 +131,7 @@ class ChatElement extends StatelessWidget {
           ),
         );
       },
+      onLongPress: () => _showOptionsModal(context, chatId, title),
     );
   }
 }

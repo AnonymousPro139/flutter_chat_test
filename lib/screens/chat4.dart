@@ -6,9 +6,11 @@ import 'package:flutter_chat_core/flutter_chat_core.dart' as types;
 import 'package:flyer_chat_text_message/flyer_chat_text_message.dart';
 import 'package:flyer_chat_image_message/flyer_chat_image_message.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:test_firebase/firestore/services/group/index.dart';
 import 'package:test_firebase/firestore/services/message/functions.dart';
 import 'package:test_firebase/riverpod/providers.dart';
 import 'package:test_firebase/widgets/AddParticipantsDialog.dart';
+import 'package:test_firebase/widgets/ShowParticipants.dart';
 import 'package:test_firebase/widgets/replyPreview.dart';
 import 'package:test_firebase/models/user.dart';
 
@@ -44,9 +46,154 @@ class _ChatScreenState extends ConsumerState<ChatScreen4> {
     final initialData = ref.read(
       chatMessagesProvider(widget.chatId),
     ); // Here getting error
+
     if (initialData.hasValue) {
       _chatController.setMessages(initialData.value!, animated: false);
     }
+  }
+
+  void _confirmLeaveGroup(BuildContext context, String chatId, String userId) {
+    // 1. CAPTURE the screen's Navigator and Ref before entering the dialog/async zone
+    final navigator = Navigator.of(context);
+    final rootRef = ref; // 'ref' from your ConsumerState
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Leave Group?"),
+        content: const Text(
+          "You will no longer receive messages from this group.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              // Close dialog
+              Navigator.pop(context);
+
+              await leaveGroup(chatId, userId);
+
+              // 4. Use the CAPTURED navigator and ref
+              // We don't check 'dialogContext.mounted' because that context is gone.
+              // We use the captured navigator which still points to the main app stack.
+              rootRef.read(bottomNavIndexProvider.notifier).state = 0;
+              navigator.popUntil((route) => route.isFirst);
+
+              ScaffoldMessenger.of(navigator.context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    "You left the group",
+                    style: TextStyle(
+                      color: Theme.of(
+                        navigator.context,
+                      ).colorScheme.inversePrimary,
+                    ),
+                  ),
+                ),
+              );
+            },
+            child: const Text("Leave", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showOptionsModal(
+    BuildContext context,
+    String chatId,
+    String chatTitle,
+    List<AppUser> allFriends,
+    List<AppUser> currentParticipants,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min, // Wrap content height
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  chatTitle,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.people),
+                title: const Text("Show participants"),
+
+                onTap: () async {
+                  await showDialog(
+                    context: context,
+                    builder: (context) => ShowParticipantsDialog(
+                      chatId: widget.chatId,
+                      currentParticipants: currentParticipants,
+                    ),
+                  );
+
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(
+                  Icons.add_circle_outline,
+                  color: Colors.blue,
+                ),
+                title: const Text(
+                  "Add user",
+                  style: TextStyle(color: Colors.blue),
+                ),
+                subtitle: const Text("Add new participants to the chat."),
+                onTap: () async {
+                  // 2. Show the dialog
+                  await showDialog(
+                    context: context,
+                    builder: (context) => AddParticipantsDialog(
+                      chatId: widget.chatId,
+                      allFriends: allFriends,
+                      currentParticipants: currentParticipants,
+                    ),
+                  );
+
+                  Navigator.pop(context); // Close modal
+                },
+              ),
+              ListTile(
+                leading: const Icon(
+                  Icons.exit_to_app_outlined,
+                  color: Colors.red,
+                ),
+                title: const Text("Leave this chat"),
+                onTap: () {
+                  Navigator.pop(context);
+
+                  _confirmLeaveGroup(context, widget.chatId, widget.user.id);
+                },
+              ),
+
+              ListTile(
+                leading: const Icon(Icons.cancel_outlined),
+                title: const Text("Cancel"),
+                onTap: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -73,6 +220,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen4> {
     // We don't use the 'data' here to build the list directly because
     // the Chat widget uses the controller instead.
     final messagesAsync = ref.watch(chatMessagesProvider(widget.chatId));
+    final friends =
+        ref.watch(friendsProvider(widget.user.id)).value ??
+        []; // Bur gadna tald n baij bgaad param-r orj ireh ??
+    final participants =
+        ref.watch(participantProfilesProvider(widget.chatId)).value ?? [];
+
+    // Watch the profiles map
+    // final profilesAsync = ref.watch(chatProfilesProvider(widget.chatId));
 
     return SafeArea(
       child: Scaffold(
@@ -110,22 +265,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen4> {
           actions: [
             IconButton(
               icon: const Icon(Icons.more_vert),
-              onPressed: () async {
-                // 1. Fetch your full friend list (from a provider or service)
-                // final allFriends = ref.read(friendsProvider).value ?? [];
-                final allFriends = [];
-
-                // 2. Show the dialog
-                final List<String>? selectedIds =
-                    await showDialog<List<String>>(
-                      context: context,
-                      builder: (context) => AddMembersDialog(
-                        allFriends: [],
-                        // currentParticipants: widget
-                        //     .chatParticipants, // Pass the current group list
-                        currentParticipants: [],
-                      ),
-                    );
+              onPressed: () {
+                _showOptionsModal(
+                  context,
+                  widget.chatId,
+                  widget.title,
+                  friends,
+                  participants,
+                );
               },
             ),
           ],
@@ -158,16 +305,33 @@ class _ChatScreenState extends ConsumerState<ChatScreen4> {
                     Center(child: Text('Error shu sda: $error')),
                 data: (_) {
                   return Chat(
+                    // userCache: ,
                     // theme: ChatTheme(colors: colors, typography: typography, shape: shape),
                     chatController: _chatController,
                     currentUserId: widget.user.id,
                     builders: _buildersChat(),
-
                     onMessageLongPress: _handleMessageLongPress,
-                    resolveUser: (id) async => User(
-                      id: id,
-                      name: 'John Doe',
-                    ), // Usually fetched from DB
+                    resolveUser: (id) async {
+                      // LOGGING FOR TESTING
+                      debugPrint("🔍 Resolving User ID: $id");
+
+                      // if (id == widget.user.id) {
+                      //   return Future.value(
+                      //     types.User(id: widget.user.id, name: "Me"),
+                      //   );
+                      // }
+
+                      // final profiles = profilesAsync.value;
+
+                      // // 2. Return the user from the map, or a fallback if not found yet
+                      // if (profiles != null && profiles.containsKey(id)) {
+                      //   return Future.value(profiles[id]!);
+                      // }
+                      // // Fallback while loading or if user is missing
+                      // return Future.value(
+                      //   types.User(id: id, name: "Loading..."),
+                      // );
+                    }, // Usually fetched from DB
                     onAttachmentTap: _handleAttachmentTap,
                     onMessageSend: _handleMessageSend,
                   );
