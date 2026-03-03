@@ -1,10 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_chat_core/flutter_chat_core.dart' as types;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:test_firebase/firestore/services/auth/index.dart';
-import 'package:test_firebase/firestore/services/index.dart';
-import 'package:test_firebase/firestore/services/message/handlers.dart';
-import 'package:test_firebase/firestore/services/message/utils.dart';
+import 'package:test_firebase/firebase/firestore/services/auth/index.dart';
+import 'package:test_firebase/firebase/index.dart';
+import 'package:test_firebase/firebase/firestore/services/message/handlers.dart';
+import 'package:test_firebase/firebase/firestore/services/message/utils.dart';
 import 'package:test_firebase/models/user.dart';
 
 class AuthController extends Notifier<AsyncValue<AppUser?>> {

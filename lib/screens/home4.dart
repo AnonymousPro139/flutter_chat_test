@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:test_firebase/firestore/services/group/index.dart';
+import 'package:test_firebase/firebase/firestore/services/group/index.dart';
 import 'package:test_firebase/models/user.dart';
 import 'package:test_firebase/riverpod/providers.dart';
 import 'package:test_firebase/widgets/ChatElement.dart';

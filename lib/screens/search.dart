@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:test_firebase/firestore/services/message/functions.dart';
-import 'package:test_firebase/firestore/services/user/index.dart';
+import 'package:test_firebase/firebase/firestore/services/message/functions.dart';
+import 'package:test_firebase/firebase/firestore/services/user/index.dart';
 import 'package:test_firebase/models/user.dart';
 import 'package:test_firebase/riverpod/index.dart';
 import 'package:test_firebase/screens/chat2.dart';

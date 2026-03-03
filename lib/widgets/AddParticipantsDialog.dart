@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:test_firebase/firestore/services/user/index.dart';
+import 'package:test_firebase/firebase/firestore/services/user/index.dart';
 import 'package:test_firebase/models/user.dart';
 
 class AddParticipantsDialog extends StatefulWidget {

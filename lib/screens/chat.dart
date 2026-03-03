@@ -8,8 +8,8 @@ import 'package:flyer_chat_text_message/flyer_chat_text_message.dart';
 import 'package:flyer_chat_image_message/flyer_chat_image_message.dart';
 import 'package:image_picker/image_picker.dart';
 
-import 'package:test_firebase/firestore/services/message/functions.dart';
-import 'package:test_firebase/firestore/services/message/handlers.dart';
+import 'package:test_firebase/firebase/firestore/services/message/functions.dart';
+import 'package:test_firebase/firebase/firestore/services/message/handlers.dart';
 import 'package:test_firebase/widgets/replyPreview.dart';
 import 'package:test_firebase/models/user.dart';
 

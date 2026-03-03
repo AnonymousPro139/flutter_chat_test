@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,8 +8,8 @@ import 'package:flutter_chat_core/flutter_chat_core.dart' as types;
 import 'package:flyer_chat_text_message/flyer_chat_text_message.dart';
 import 'package:flyer_chat_image_message/flyer_chat_image_message.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:test_firebase/firestore/services/group/index.dart';
-import 'package:test_firebase/firestore/services/message/functions.dart';
+import 'package:test_firebase/firebase/firestore/services/group/index.dart';
+import 'package:test_firebase/firebase/firestore/services/message/functions.dart';
 import 'package:test_firebase/riverpod/providers.dart';
 import 'package:test_firebase/widgets/AddParticipantsDialog.dart';
 import 'package:test_firebase/widgets/ShowParticipants.dart';
@@ -80,21 +82,24 @@ class _ChatScreenState extends ConsumerState<ChatScreen4> {
               // 4. Use the CAPTURED navigator and ref
               // We don't check 'dialogContext.mounted' because that context is gone.
               // We use the captured navigator which still points to the main app stack.
-              rootRef.read(bottomNavIndexProvider.notifier).state = 0;
-              navigator.popUntil((route) => route.isFirst);
 
-              ScaffoldMessenger.of(navigator.context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    "You left the group",
-                    style: TextStyle(
-                      color: Theme.of(
-                        navigator.context,
-                      ).colorScheme.inversePrimary,
+              if (navigator.mounted) {
+                rootRef.read(bottomNavIndexProvider.notifier).state = 0;
+                navigator.popUntil((route) => route.isFirst);
+
+                ScaffoldMessenger.of(navigator.context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      "You left the group",
+                      style: TextStyle(
+                        color: Theme.of(
+                          navigator.context,
+                        ).colorScheme.inversePrimary,
+                      ),
                     ),
                   ),
-                ),
-              );
+                );
+              }
             },
             child: const Text("Leave", style: TextStyle(color: Colors.white)),
           ),
@@ -298,6 +303,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen4> {
                     Text(
                       "Loading messages...",
                       style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),
@@ -332,7 +338,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen4> {
                       //   types.User(id: id, name: "Loading..."),
                       // );
                     }, // Usually fetched from DB
-                    onAttachmentTap: _handleAttachmentTap,
+                    onAttachmentTap: _handleAttachmentTap2,
                     onMessageSend: _handleMessageSend,
                   );
                 },
@@ -458,9 +464,57 @@ class _ChatScreenState extends ConsumerState<ChatScreen4> {
       chatId: widget.chatId,
       sender: widget.user,
       text:
-          'https://randomimageurl.com/assets/images/local/2026...png', // Replace with Storage URL
+          'https://images.unsplash.com/photo-1533850595620-7b1711221751?ixid=M3w4MjcwNjd8MHwxfHNlYXJjaHwxMjJ8fHBlcnNvbnxlbnwwfHx8fDE3NzI0OTQzNzJ8MA&ixlib=rb-4.1.0&fit=max&q=80', // Replace with Storage URL
       type: 'file',
     );
+  }
+
+  Future<void> _handleAttachmentTap2() async {
+    // 1. Pick the image from gallery
+    final XFile? image = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
+
+    if (image == null) return;
+
+    try {
+      // 2. Create a unique filename using a timestamp
+      // This prevents files with the same name (e.g., image.jpg) from overwriting each other
+      String fileName =
+          'chat_${widget.chatId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+
+      // 3. Create the Firebase Storage reference
+      // We store it in a subfolder named after the chatId to keep things organized
+      Reference storageRef = FirebaseStorage.instance
+          .ref()
+          .child('chat_media')
+          .child(widget.chatId)
+          .child(fileName);
+
+      // 4. Upload the file to Storage
+      // Note: We convert XFile to a standard dart:io File
+      UploadTask uploadTask = storageRef.putFile(File(image.path));
+
+      // Wait for the upload to complete and get the snapshot
+      TaskSnapshot snapshot = await uploadTask;
+
+      // 5. Retrieve the real download URL
+      String downloadUrl = await snapshot.ref.getDownloadURL();
+
+      // 6. Send the message to Firestore using the actual Storage URL
+      MessageFunctions().sendMessage(
+        chatId: widget.chatId,
+        sender: widget.user,
+        text: downloadUrl, // The hardcoded URL is now replaced by the real one!
+        type:
+            'image', // I changed this to 'image' for better UI handling, but 'file' works too
+      );
+    } catch (e) {
+      // 7. Handle any errors (connection issues, permission denied, etc.)
+      debugPrint('Upload failed: $e');
+      // Optional: Show a SnackBar to the user here
+    }
   }
 
   Future<void> _handleMessageSend(String text) async {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:test_firebase/firestore/services/auth/index.dart';
+import 'package:test_firebase/firebase/firestore/services/auth/index.dart';
 
 class RegisterScreen extends ConsumerWidget {
   const RegisterScreen({super.key});

@@ -6,7 +6,7 @@ import 'package:flutter_chat_core/flutter_chat_core.dart' as types;
 import 'package:flyer_chat_text_message/flyer_chat_text_message.dart';
 import 'package:flyer_chat_image_message/flyer_chat_image_message.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:test_firebase/firestore/services/message/functions.dart';
+import 'package:test_firebase/firebase/firestore/services/message/functions.dart';
 import 'package:test_firebase/riverpod/providers.dart';
 import 'package:test_firebase/widgets/replyPreview.dart';
 import 'package:test_firebase/models/user.dart';

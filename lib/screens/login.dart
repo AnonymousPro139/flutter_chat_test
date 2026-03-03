@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:test_firebase/firestore/services/auth/index.dart';
+import 'package:test_firebase/firebase/firestore/services/auth/index.dart';
 import 'package:test_firebase/riverpod/index.dart';
 import 'package:test_firebase/screens/otp.dart';
 import 'package:test_firebase/screens/register.dart';

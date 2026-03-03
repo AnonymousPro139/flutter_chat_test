@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:test_firebase/firestore/services/message/handlers.dart';
+import 'package:test_firebase/firebase/firestore/services/message/handlers.dart';
 import 'package:test_firebase/models/user.dart';
 import 'package:test_firebase/screens/search.dart';
 import 'package:test_firebase/widgets/ChatElement.dart';

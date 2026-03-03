@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:test_firebase/models/user.dart';
 import 'package:test_firebase/screens/search.dart';
 import 'package:test_firebase/widgets/chat_tile.dart';
-import 'package:test_firebase/firestore/services/index.dart';
+import 'package:test_firebase/firebase/index.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   final AppUser user;
