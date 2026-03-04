@@ -85,4 +85,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'test-flutter-e2ee.firebasestorage.app',
     measurementId: 'G-ZGSTWEL072',
   );
+
 }

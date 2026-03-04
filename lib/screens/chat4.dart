@@ -10,6 +10,7 @@ import 'package:flyer_chat_image_message/flyer_chat_image_message.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:test_firebase/firebase/firestore/services/group/index.dart';
 import 'package:test_firebase/firebase/firestore/services/message/functions.dart';
+import 'package:test_firebase/firebase/storage/index.dart';
 import 'package:test_firebase/riverpod/providers.dart';
 import 'package:test_firebase/widgets/AddParticipantsDialog.dart';
 import 'package:test_firebase/widgets/ShowParticipants.dart';
@@ -338,7 +339,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen4> {
                       //   types.User(id: id, name: "Loading..."),
                       // );
                     }, // Usually fetched from DB
-                    onAttachmentTap: _handleAttachmentTap2,
+                    onAttachmentTap: _handleAttachmentTap,
                     onMessageSend: _handleMessageSend,
                   );
                 },
@@ -452,24 +453,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen4> {
   }
 
   Future<void> _handleAttachmentTap() async {
-    final XFile? image = await _picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 85,
-    );
-    if (image == null) return;
-
-    // TODO: Upload `image.path` to Firebase Storage first to get a real URL!
-    // Using a hardcoded URL for now.
-    MessageFunctions().sendMessage(
-      chatId: widget.chatId,
-      sender: widget.user,
-      text:
-          'https://images.unsplash.com/photo-1533850595620-7b1711221751?ixid=M3w4MjcwNjd8MHwxfHNlYXJjaHwxMjJ8fHBlcnNvbnxlbnwwfHx8fDE3NzI0OTQzNzJ8MA&ixlib=rb-4.1.0&fit=max&q=80', // Replace with Storage URL
-      type: 'file',
-    );
-  }
-
-  Future<void> _handleAttachmentTap2() async {
     // 1. Pick the image from gallery
     final XFile? image = await _picker.pickImage(
       source: ImageSource.gallery,
@@ -478,42 +461,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen4> {
 
     if (image == null) return;
 
-    try {
-      // 2. Create a unique filename using a timestamp
-      // This prevents files with the same name (e.g., image.jpg) from overwriting each other
-      String fileName =
-          'chat_${widget.chatId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+    print("image ${image}");
 
-      // 3. Create the Firebase Storage reference
-      // We store it in a subfolder named after the chatId to keep things organized
-      Reference storageRef = FirebaseStorage.instance
-          .ref()
-          .child('chat_media')
-          .child(widget.chatId)
-          .child(fileName);
+    String downloadUrl = await uploadImage(widget.chatId, image.path);
 
-      // 4. Upload the file to Storage
-      // Note: We convert XFile to a standard dart:io File
-      UploadTask uploadTask = storageRef.putFile(File(image.path));
-
-      // Wait for the upload to complete and get the snapshot
-      TaskSnapshot snapshot = await uploadTask;
-
-      // 5. Retrieve the real download URL
-      String downloadUrl = await snapshot.ref.getDownloadURL();
-
-      // 6. Send the message to Firestore using the actual Storage URL
+    if (downloadUrl != '') {
       MessageFunctions().sendMessage(
         chatId: widget.chatId,
         sender: widget.user,
-        text: downloadUrl, // The hardcoded URL is now replaced by the real one!
-        type:
-            'image', // I changed this to 'image' for better UI handling, but 'file' works too
+        text: downloadUrl,
+        type: 'file',
       );
-    } catch (e) {
-      // 7. Handle any errors (connection issues, permission denied, etc.)
-      debugPrint('Upload failed: $e');
-      // Optional: Show a SnackBar to the user here
     }
   }
 
