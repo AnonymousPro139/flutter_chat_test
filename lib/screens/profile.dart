@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:test_firebase/models/user.dart';
+import 'package:test_firebase/riverpod/index.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends ConsumerWidget {
   final AppUser user;
 
   const ProfileScreen({super.key, required this.user});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       // appBar: AppBar(
       //   // title: const Text("Profile"),
@@ -57,6 +59,34 @@ class ProfileScreen extends StatelessWidget {
                   child: FilledButton.tonal(
                     onPressed: () {
                       // Sign out logic here
+
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text("Logout"),
+                          content: const Text(
+                            "Are you sure you want to log out?",
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text("Cancel"),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                ref
+                                    .read(authControllerProvider.notifier)
+                                    .logout();
+                                Navigator.pop(context);
+                              },
+                              child: const Text(
+                                "Logout",
+                                style: TextStyle(color: Colors.red),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
                     },
                     style: FilledButton.styleFrom(
                       foregroundColor: Colors.red,

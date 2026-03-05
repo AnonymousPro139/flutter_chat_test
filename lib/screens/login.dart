@@ -21,21 +21,21 @@ class LoginScreen extends ConsumerWidget {
             decoration: InputDecoration(labelText: "Phone"),
             controller: phoneController,
           ),
+
           // TextField(
           //   decoration: InputDecoration(labelText: "Password"),
           //   controller: passwordController,
           //   obscureText: true,
           // ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => RegisterScreen()),
-              );
-            },
-            child: Text("Go to Register"),
-          ),
-
+          // ElevatedButton(
+          //   onPressed: () {
+          //     Navigator.push(
+          //       context,
+          //       MaterialPageRoute(builder: (context) => RegisterScreen()),
+          //     );
+          //   },
+          //   child: Text("Go to Register"),
+          // ),
           ElevatedButton(
             onPressed: () async {
               String returnedId = await Auth().sendOtp(phoneController.text);
