@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:test_firebase/const.dart';
 import 'package:test_firebase/firebase/index.dart';
 import 'package:test_firebase/models/user.dart';
+import 'package:path/path.dart' as p;
 
 class MessageFunctions extends FirestoreService {
   Future<String> createOrGetChat(
@@ -41,6 +43,29 @@ class MessageFunctions extends FirestoreService {
       'text': text,
       'createdAt': FieldValue.serverTimestamp(),
       'type': type,
+    });
+  }
+
+  void sendFileMessage({
+    required String chatId,
+    required AppUser sender,
+    required String uri,
+    required String filename,
+    required int size,
+    type = 'file',
+  }) async {
+    firestore.collection('chats').doc(chatId).collection('messages').add({
+      'senderId': sender.id,
+      'senderPhone': sender.phone,
+      'senderDisplayName': 'TestdisplayName',
+      'uri': uri,
+      'name': filename,
+      'size': size,
+      'createdAt': FieldValue.serverTimestamp(),
+      'type':
+          imageExtensions.contains(p.extension(filename).replaceFirst('.', ''))
+          ? 'image'
+          : "file",
     });
   }
 }

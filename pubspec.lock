@@ -448,6 +448,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flyer_chat_file_message:
+    dependency: "direct main"
+    description:
+      name: flyer_chat_file_message
+      sha256: "96c5c25908cd671dda1963ade03e188e6a14bba6b116e73fac329f1abefc9ad1"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.4.0"
   flyer_chat_image_message:
     dependency: "direct main"
     description:

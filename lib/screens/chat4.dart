@@ -1,13 +1,13 @@
 import 'dart:io';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_chat_core/flutter_chat_core.dart';
 import 'package:flutter_chat_core/flutter_chat_core.dart' as types;
+import 'package:flyer_chat_file_message/flyer_chat_file_message.dart';
 import 'package:flyer_chat_text_message/flyer_chat_text_message.dart';
 import 'package:flyer_chat_image_message/flyer_chat_image_message.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:test_firebase/firebase/firestore/services/group/index.dart';
 import 'package:test_firebase/firebase/firestore/services/message/functions.dart';
 import 'package:test_firebase/firebase/storage/index.dart';
@@ -35,7 +35,6 @@ class ChatScreen4 extends ConsumerStatefulWidget {
 
 class _ChatScreenState extends ConsumerState<ChatScreen4> {
   final _chatController = InMemoryChatController();
-  final ImagePicker _picker = ImagePicker();
   types.TextMessage? _replyingTo;
 
   @override
@@ -312,13 +311,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen4> {
                     Center(child: Text('Error shu sda: $error')),
                 data: (_) {
                   return Chat(
-                    // userCache: ,
-                    // theme: ChatTheme(colors: colors, typography: typography, shape: shape),
                     chatController: _chatController,
                     currentUserId: widget.user.id,
                     builders: _buildersChat(),
                     onMessageLongPress: _handleMessageLongPress,
-                    resolveUser: (id) async {
+                    resolveUser: (id) {
                       // LOGGING FOR TESTING
                       debugPrint("🔍 Resolving User ID: $id");
 
@@ -335,9 +332,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen4> {
                       //   return Future.value(profiles[id]!);
                       // }
                       // // Fallback while loading or if user is missing
-                      // return Future.value(
-                      //   types.User(id: id, name: "Loading..."),
-                      // );
+                      return Future.value(
+                        types.User(id: id, name: "Loading..."),
+                      );
                     }, // Usually fetched from DB
                     onAttachmentTap: _handleAttachmentTap,
                     onMessageSend: _handleMessageSend,
@@ -416,6 +413,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen4> {
               ),
             );
           },
+
+      fileMessageBuilder:
+          (context, message, index, {required isSentByMe, groupStatus}) {
+            return FlyerChatFileMessage(message: message, index: index);
+          },
     );
   }
 
@@ -453,25 +455,22 @@ class _ChatScreenState extends ConsumerState<ChatScreen4> {
   }
 
   Future<void> _handleAttachmentTap() async {
-    // 1. Pick the image from gallery
-    final XFile? image = await _picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 85,
-    );
+    FilePickerResult? result = await FilePicker.platform.pickFiles();
 
-    if (image == null) return;
+    if (result != null) {
+      File file = File(result.files.single.path!);
 
-    print("image ${image}");
+      String downloadUrl = await uploadImage(widget.chatId, file.path);
 
-    String downloadUrl = await uploadImage(widget.chatId, image.path);
-
-    if (downloadUrl != '') {
-      MessageFunctions().sendMessage(
-        chatId: widget.chatId,
-        sender: widget.user,
-        text: downloadUrl,
-        type: 'file',
-      );
+      if (downloadUrl != '') {
+        MessageFunctions().sendFileMessage(
+          chatId: widget.chatId,
+          sender: widget.user,
+          filename: file.path,
+          uri: downloadUrl,
+          size: result.files.single.size,
+        );
+      }
     }
   }
 
