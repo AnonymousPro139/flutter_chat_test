@@ -1,6 +1,4 @@
 import 'dart:io';
-// 1. ADD THIS IMPORT (The flyer library depends on this package internally)
-import 'package:provider/provider.dart' as pkg_provider;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
@@ -349,55 +347,47 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
                   // This ensures that when the Hero "flies" back, the
                   // FlyerChatImageMessage can still find the ChatController.
 
-                  return pkg_provider.Provider<ChatController>.value(
-                    value: _chatController,
-                    child: Chat(
-                      chatController: _chatController,
-                      currentUserId: widget.user.id,
-                      builders: _buildersChat(),
-                      onMessageLongPress: _handleMessageLongPress,
-                      resolveUser: (id) {
-                        return Future.value(
-                          types.User(id: id, name: "Loading..."),
-                        );
-                      }, // Usually fetched from DB
-                      onAttachmentTap: _handleAttachmentTap,
-                      onMessageSend: _handleMessageSend,
-                      onMessageTap:
-                          (
-                            context,
-                            message, {
-                            required details,
-                            required index,
-                          }) {
-                            if (message is types.ImageMessage) {
-                              // Navigator.push(
-                              //   context,
-                              //   MaterialPageRoute(
-                              //     builder: (context) => FullScreenImage(
-                              //       uri: message.source,
-                              //       messageId: message.id,
-                              //     ),
-                              //   ),
-                              // );
+                  return Chat(
+                    chatController: _chatController,
+                    currentUserId: widget.user.id,
+                    builders: _buildersChat(),
+                    onMessageLongPress: _handleMessageLongPress,
+                    resolveUser: (id) {
+                      return Future.value(
+                        types.User(id: id, name: "Loading..."),
+                      );
+                    }, // Usually fetched from DB
+                    onAttachmentTap: _handleAttachmentTap,
+                    onMessageSend: _handleMessageSend,
+                    onMessageTap:
+                        (context, message, {required details, required index}) {
+                          if (message is types.ImageMessage) {
+                            // Navigator.push(
+                            //   context,
+                            //   MaterialPageRoute(
+                            //     builder: (context) => FullScreenImage(
+                            //       uri: message.source,
+                            //       messageId: message.id,
+                            //     ),
+                            //   ),
+                            // );
 
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => MediaViewerScreen(
-                                    uri: message.source,
-                                    isImage: true,
-                                    fileName: message.source,
-                                  ),
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => MediaViewerScreen(
+                                  uri: message.source,
+                                  isImage: true,
+                                  fileName: message.source,
                                 ),
-                              );
-                            }
+                              ),
+                            );
+                          }
 
-                            if (message is types.FileMessage) {
-                              print('File message bnshu');
-                            }
-                          },
-                    ),
+                          if (message is types.FileMessage) {
+                            print('File message bnshu');
+                          }
+                        },
                   );
                 },
               ),
@@ -468,27 +458,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
                 message: message,
                 index: index, //ValueKey(message.id),
               ),
-              // child: pkg_provider.Provider<ChatController>.value(
-              //   value: _chatController, // Pass the controller locally
-              //   child: FlyerChatImageMessage(message: message, index: index),
-              // ),
-              // child: pkg_provider.MultiProvider(
-              //   providers: [
-              //     // Provide the ChatController
-              //     pkg_provider.Provider<ChatController>.value(
-              //       value: _chatController,
-              //     ),
-
-              //     // Provide the CrossCache (grab it from the current context)
-              //     pkg_provider.Provider<CrossCache>.value(
-              //       value: pkg_provider.Provider.of<CrossCache>(
-              //         context,
-              //         listen: false,
-              //       ),
-              //     ),
-              //   ],
-              //   child: FlyerChatImageMessage(message: message, index: index),
-              // ),
             );
           },
     );
