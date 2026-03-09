@@ -216,7 +216,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen4> {
       (previous, next) {
         if (next is AsyncData<List<types.Message>>) {
           // animated: true allows the chat UI to slide new messages in nicely
-          _chatController.setMessages(next.value, animated: true);
+          _chatController.setMessages(next.value, animated: false); // true
         }
       },
     );
@@ -338,6 +338,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen4> {
                     }, // Usually fetched from DB
                     onAttachmentTap: _handleAttachmentTap,
                     onMessageSend: _handleMessageSend,
+                    onMessageTap:
+                        (context, message, {required details, required index}) {
+                          if (message is types.ImageMessage) {
+                            // Navigator.push(
+                            //   context,
+                            //   MaterialPageRoute(
+                            //     builder: (context) => FullScreenImage(
+                            //       uri: message.source,
+                            //       messageId: message.id,
+                            //     ),
+                            //   ),
+                            // );
+                          }
+                        },
                   );
                 },
               ),
@@ -394,30 +408,42 @@ class _ChatScreenState extends ConsumerState<ChatScreen4> {
               ),
             );
           },
-      imageMessageBuilder:
-          (context, message, index, {required isSentByMe, groupStatus}) {
-            return Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: FlyerChatImageMessage(message: message, index: index),
-              ),
-            );
-          },
-
       fileMessageBuilder:
           (context, message, index, {required isSentByMe, groupStatus}) {
             return FlyerChatFileMessage(message: message, index: index);
           },
+      imageMessageBuilder:
+          (context, message, index, {required isSentByMe, groupStatus}) {
+            return Hero(
+              tag: message.id,
+              child: FlyerChatImageMessage(
+                message: message,
+                index: index, //ValueKey(message.id),
+              ),
+            );
+          },
+      // imageMessageBuilder:
+      //     (context, message, index, {required isSentByMe, groupStatus}) {
+      //       return Container(
+      //         decoration: BoxDecoration(
+      //           borderRadius: BorderRadius.circular(20),
+      //           boxShadow: [
+      //             BoxShadow(
+      //               color: Colors.black.withOpacity(0.1),
+      //               blurRadius: 10,
+      //               offset: const Offset(0, 4),
+      //             ),
+      //           ],
+      //         ),
+      //         child: ClipRRect(
+      //           borderRadius: BorderRadius.circular(20),
+      //           child: FlyerChatImageMessage(
+      //             message: message,
+      //             index: index, //ValueKey(message.id),
+      //           ),
+      //         ),
+      //       );
+      //     },
     );
   }
 

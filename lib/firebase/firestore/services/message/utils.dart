@@ -51,64 +51,76 @@ class MessageUtils {
   }
 
   Message mapDocToMessage2(DocumentSnapshot<Map<String, dynamic>> doc) {
-    final data = doc.data();
+    try {
+      final data = doc.data();
 
-    final createdAt = data?['createdAt'] is Timestamp
-        ? (data?['createdAt'] as Timestamp).toDate()
-        : (data?['createdAt'] is String
-              ? DateTime.parse(data?['createdAt']).toUtc()
-              : DateTime.fromMillisecondsSinceEpoch(0, isUtc: true));
+      final createdAt = data?['createdAt'] is Timestamp
+          ? (data?['createdAt'] as Timestamp).toDate()
+          : (data?['createdAt'] is String
+                ? DateTime.parse(data?['createdAt']).toUtc()
+                : DateTime.fromMillisecondsSinceEpoch(0, isUtc: true));
 
-    if (data?['type'] == 'text') {
-      return TextMessage(
-        id: doc.id,
-        authorId: data?['senderId'],
-        createdAt: createdAt,
-        text: data?['text'],
-        replyToMessageId: data?['replyToMessageId'],
-        status: MessageStatus.sent,
-      );
-    } else {
-      if (data?['type'] == 'image') {
-        return ImageMessage(
+      if (data?['type'] == 'text') {
+        return TextMessage(
           id: doc.id,
           authorId: data?['senderId'],
           createdAt: createdAt,
-          source: data?['uri'] ?? '',
+          text: data?['text'],
+          replyToMessageId: data?['replyToMessageId'],
           status: MessageStatus.sent,
         );
       } else {
-        if (data?['type'] == 'file') {
-          return FileMessage(
+        if (data?['type'] == 'image') {
+          return ImageMessage(
             id: doc.id,
             authorId: data?['senderId'],
             createdAt: createdAt,
-            name: data?['uri'],
-            size: data?['size'] ?? 0,
             source: data?['uri'] ?? '',
             status: MessageStatus.sent,
           );
         } else {
-          if (data?['type'] == 'system') {
-            return SystemMessage(
+          if (data?['type'] == 'file') {
+            return FileMessage(
               id: doc.id,
               authorId: data?['senderId'],
               createdAt: createdAt,
-              text: data?['text'] ?? '',
+              name: data?['uri'],
+              size: data?['size'] ?? 0,
+              source: data?['uri'] ?? '',
               status: MessageStatus.sent,
             );
           } else {
-            return TextMessage(
-              id: doc.id,
-              authorId: data?['senderId'],
-              createdAt: createdAt,
-              text: data?['text'],
-              replyToMessageId: data?['replyToMessageId'],
-              status: MessageStatus.sent,
-            );
+            if (data?['type'] == 'system') {
+              return SystemMessage(
+                id: doc.id,
+                authorId: data?['senderId'],
+                createdAt: createdAt,
+                text: data?['text'] ?? '',
+                status: MessageStatus.sent,
+              );
+            } else {
+              return TextMessage(
+                id: doc.id,
+                authorId: data?['senderId'],
+                createdAt: createdAt,
+                text: data?['text'],
+                replyToMessageId: data?['replyToMessageId'],
+                status: MessageStatus.sent,
+              );
+            }
           }
         }
       }
+    } catch (e) {
+      print('++ Error in mapDocToMessage2: ${e}');
+
+      return TextMessage(
+        id: doc.id,
+        authorId: "123",
+        createdAt: null,
+        text: 'Erorr shuu',
+        status: MessageStatus.sent,
+      );
     }
   }
 

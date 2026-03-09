@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:test_firebase/firebase/firestore/services/user/index.dart';
 import 'package:test_firebase/models/user.dart';
 import 'package:test_firebase/screens/chat4.dart';
+import 'package:test_firebase/screens/chat5.dart';
 
 class ChatElement extends StatelessWidget {
   const ChatElement({
@@ -127,7 +128,7 @@ class ChatElement extends StatelessWidget {
           context,
           MaterialPageRoute(
             builder: (_) =>
-                ChatScreen4(user: user, title: title, chatId: chatId),
+                ChatScreen5(user: user, title: title, chatId: chatId),
           ),
         );
       },
