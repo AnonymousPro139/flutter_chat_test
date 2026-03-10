@@ -12,7 +12,11 @@ class UserFirestoreService extends FirestoreService {
 
     if (snapshot.docs.isNotEmpty) {
       final user = snapshot.docs.first.data();
-      return AppUser(id: snapshot.docs.first.id, phone: user['phone']);
+      return AppUser(
+        id: snapshot.docs.first.id,
+        phone: user['phone'],
+        isVerifiedBySyncCode: false,
+      );
     } else {
       // does NOT exist
       return null;
@@ -53,5 +57,11 @@ class UserFirestoreService extends FirestoreService {
 
     // Cast the dynamic list to a List<String>
     return List<String>.from(doc.data()?['participants'] ?? []);
+  }
+
+  Future<Map<String, dynamic>?> getMyPublicKeys({required String myId}) async {
+    final doc = await firestore.collection('users').doc(myId).get();
+
+    return doc.data();
   }
 }

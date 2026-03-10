@@ -16,7 +16,11 @@ class AuthController extends Notifier<AsyncValue<AppUser?>> {
       final user = await Auth().login(phone, password);
 
       if (user != null && user['id'] != null) {
-        return AppUser(id: user['id'], phone: user['phone']);
+        return AppUser(
+          id: user['id'],
+          phone: user['phone'],
+          isVerifiedBySyncCode: false,
+        );
       }
     });
   }
@@ -28,8 +32,24 @@ class AuthController extends Notifier<AsyncValue<AppUser?>> {
       final user = await Auth().userChecker();
 
       if (user != null && user['id'] != null) {
-        return AppUser(id: user['id'], phone: user['phone']);
+        return AppUser(
+          id: user['id'],
+          phone: user['phone'],
+          isVerifiedBySyncCode: false,
+        );
       }
+    });
+  }
+
+  Future<void> successSyncCode(AppUser loggedUser) async {
+    state = const AsyncValue.loading();
+
+    state = await AsyncValue.guard(() async {
+      return AppUser(
+        id: loggedUser.id,
+        phone: loggedUser.phone,
+        isVerifiedBySyncCode: true,
+      );
     });
   }
 

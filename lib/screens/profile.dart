@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:test_firebase/localstorage/index.dart';
 import 'package:test_firebase/models/user.dart';
 import 'package:test_firebase/riverpod/index.dart';
 
@@ -74,6 +75,9 @@ class ProfileScreen extends ConsumerWidget {
                             ),
                             TextButton(
                               onPressed: () {
+                                // remove storage keys
+                                LocalStorageService().deleteKeys();
+
                                 ref
                                     .read(authControllerProvider.notifier)
                                     .logout();

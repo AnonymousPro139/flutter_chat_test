@@ -15,12 +15,21 @@ class MessageFunctions extends FirestoreService {
 
     final chatRef = firestore.collection('chats').doc(chatId);
 
-    await chatRef.set({
-      'type': type,
-      'title': title,
-      'participants': [myId, uid2],
-      'createdAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    final docSnapshot = await chatRef.get();
+
+    if (!docSnapshot.exists) {
+      // Document doesn't exist, so we CREATE it with the timestamp
+      await chatRef.set({
+        'type': type,
+        'title': title,
+        'participants': [myId, uid2],
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } else {
+      // Document already exists.
+      // We do NOT include 'createdAt' here so it stays preserved.
+      // await chatRef.update({'type': type, 'title': title});
+    }
 
     return chatId;
   }

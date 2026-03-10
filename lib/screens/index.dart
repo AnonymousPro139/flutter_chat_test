@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:test_firebase/riverpod/index.dart';
+import 'package:test_firebase/screens/SyncCode.dart';
 import 'package:test_firebase/screens/bottom.dart';
-import 'package:test_firebase/screens/login.dart';
 import 'package:test_firebase/screens/login2.dart';
 
 class AuthGate extends ConsumerWidget {
@@ -17,10 +17,16 @@ class AuthGate extends ConsumerWidget {
           const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (e, _) => Scaffold(body: Center(child: Text("Heyyyy! Error: $e"))),
       data: (user) {
-        if (user == null || user?.id == null) return const LoginScreen2();
-
-        // return HomeScreen4(user: user);
-        return BottomScreen();
+        if (user == null || user?.id == null) {
+          return const LoginScreen2();
+        } else {
+          if (user.id != null && user.isVerifiedBySyncCode == false) {
+            // return SyncCodeScreen(storedHash: "test", onVerified: onVerified)
+            return SyncCodeScreen(loggedUser: user);
+          } else {
+            return BottomScreen();
+          }
+        }
       },
     );
   }

@@ -1,13 +1,21 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:test_firebase/crypto/utils.dart';
 import 'package:test_firebase/firebase/index.dart';
 
 Future<String> createGroupChat(String title, createdUserId) async {
   // .doc() with no path generates a unique ID automatically
   final docRef = FirestoreService().firestore.collection('chats').doc();
 
+  final idKey = await createSha256Hash("groupchat");
+  final spreKey = await createSha256Hash("test");
+  final ephKey = await createSha256Hash("test123");
+
   await docRef.set({
     'id': docRef.id, // This is your automatic ID
     'title': title,
+    'idPubKey': idKey,
+    'spPubKey': spreKey,
+    'epPubKey': ephKey,
     'participants': [createdUserId],
     'admins': [createdUserId],
     'type': 'group',

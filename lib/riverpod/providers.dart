@@ -50,7 +50,11 @@ final friendsProvider = StreamProvider.family<List<AppUser>, String>((
       .map(
         (snap) => snap.docs.map((doc) {
           final data = doc.data();
-          return AppUser(id: doc.id, phone: data['phone'] ?? 'User');
+          return AppUser(
+            id: doc.id,
+            phone: data['phone'] ?? 'User',
+            isVerifiedBySyncCode: false,
+          );
         }).toList(),
       );
 });
@@ -85,7 +89,11 @@ final participantProfilesProvider =
 
       return query.docs
           .map(
-            (doc) => AppUser(id: doc.id, phone: doc.data()['phone'] ?? 'User'),
+            (doc) => AppUser(
+              id: doc.id,
+              phone: doc.data()['phone'] ?? 'User',
+              isVerifiedBySyncCode: false,
+            ),
           )
           .toList();
     });

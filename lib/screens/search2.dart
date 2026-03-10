@@ -82,9 +82,9 @@ class _GlobalSearchScreenState extends ConsumerState<GlobalSearchScreen> {
 
     // Dummy data for demonstration
     final mockUsers = [
-      AppUser(id: '101', phone: '+123456'),
-      AppUser(id: '102', phone: '+987654'),
-      AppUser(id: '103', phone: '+555444'),
+      AppUser(id: '101', phone: '+123456', isVerifiedBySyncCode: false),
+      AppUser(id: '102', phone: '+987654', isVerifiedBySyncCode: false),
+      AppUser(id: '103', phone: '+555444', isVerifiedBySyncCode: false),
     ];
 
     setState(() {

@@ -135,37 +135,9 @@ class Auth extends FirestoreService {
     } else {
       // New user, go to "Complete Profile" screen to get their name
 
-      await createUserProfile("Laachkaa");
+      await createNewUser(user);
 
       return {'id': user.uid, 'phone': user.phoneNumber};
-    }
-  }
-
-  Future<void> createUserProfile(String name) async {
-    final user = FirebaseAuth.instance.currentUser;
-
-    // if (user != null) {
-    //   // 1. Reference the 'users' collection and specifically the document named with the UID
-    //   final userRef = firestore.collection('users').doc(user.uid);
-
-    //   // 2. Use .set() to create or update the document
-    //   await userRef.set(
-    //     {
-    //       'uid': user.uid,
-    //       'phone': user.phoneNumber, // Automatically comes from Auth
-    //       'displayName': name,
-    //       'createdAt':
-    //           FieldValue.serverTimestamp(), // Better than using phone time
-    //       'role': 'user',
-    //     },
-    //     SetOptions(merge: true),
-    //   ); // Use merge: true to avoid overwriting existing data if they log in again
-
-    //   print("User document created/updated for UID: ${user.uid}");
-    // }
-
-    if (user != null) {
-      await createNewUser(user);
     }
   }
 
@@ -195,6 +167,34 @@ class Auth extends FirestoreService {
       'phone': firebaseUser.phoneNumber,
       'photoUrl': firebaseUser.photoURL,
     });
+
+    await batch.commit();
+  }
+
+  Future<void> createNewUserKeys(
+    String uid,
+    String idPubKey,
+    String spPubKey,
+    String epPubKey,
+  ) async {
+    final batch = firestore.batch();
+
+    final privateRef = firestore.collection('users').doc(uid);
+
+    batch.set(privateRef, {
+      'idPubKey': idPubKey,
+      'spPubKey': spPubKey,
+      'epPubKey': epPubKey,
+      'keysCreatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+
+    final publicRef = firestore.collection('public_profiles').doc(uid);
+
+    batch.set(publicRef, {
+      'idPubKey': idPubKey,
+      'spPubKey': spPubKey,
+      'epPubKey': epPubKey,
+    }, SetOptions(merge: true));
 
     await batch.commit();
   }
