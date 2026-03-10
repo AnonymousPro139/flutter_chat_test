@@ -11,7 +11,7 @@ class MessageFunctions extends FirestoreService {
     String type = "dm",
     String title = '',
   }) async {
-    final chatId = genereateChatIdForUsers(myId, uid2);
+    final chatId = genereteChatIdForUsers(myId, uid2);
 
     final chatRef = firestore.collection('chats').doc(chatId);
 
@@ -25,16 +25,12 @@ class MessageFunctions extends FirestoreService {
         'participants': [myId, uid2],
         'createdAt': FieldValue.serverTimestamp(),
       });
-    } else {
-      // Document already exists.
-      // We do NOT include 'createdAt' here so it stays preserved.
-      // await chatRef.update({'type': type, 'title': title});
     }
 
     return chatId;
   }
 
-  String genereateChatIdForUsers(String uid1, String uid2) {
+  String genereteChatIdForUsers(String uid1, String uid2) {
     final ids = [uid1, uid2]..sort();
     return '${ids[0]}_${ids[1]}';
   }
