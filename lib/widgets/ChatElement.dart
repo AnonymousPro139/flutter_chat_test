@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:test_firebase/firebase/firestore/services/user/index.dart';
 import 'package:test_firebase/models/user.dart';
-import 'package:test_firebase/screens/chat4.dart';
 import 'package:test_firebase/screens/chat5.dart';
 
 class ChatElement extends StatelessWidget {
@@ -13,14 +12,21 @@ class ChatElement extends StatelessWidget {
     required this.lastMessage,
     required this.lastMessageAt,
     required this.user,
+
+    required this.idPubKey,
+    required this.epPubKey,
+    required this.spPubKey,
   });
 
   final AppUser user;
   final String chatId;
   final String title;
-
   final String lastMessage;
-  final dynamic lastMessageAt; // Timestamp? (Firestore)
+  final dynamic lastMessageAt;
+
+  final String idPubKey;
+  final String epPubKey;
+  final String spPubKey;
 
   String _formatTime(dynamic ts) {
     if (ts == null) return '';
@@ -127,8 +133,14 @@ class ChatElement extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) =>
-                ChatScreen5(user: user, title: title, chatId: chatId),
+            builder: (_) => ChatScreen5(
+              user: user,
+              title: title,
+              chatId: chatId,
+              idPubKey: idPubKey,
+              epPubKey: epPubKey,
+              spPubKey: spPubKey,
+            ),
           ),
         );
       },

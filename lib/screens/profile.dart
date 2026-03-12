@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:test_firebase/crypto/session.dart';
 import 'package:test_firebase/localstorage/index.dart';
 import 'package:test_firebase/models/user.dart';
 import 'package:test_firebase/riverpod/index.dart';
@@ -78,9 +79,12 @@ class ProfileScreen extends ConsumerWidget {
                                 // remove storage keys
                                 LocalStorageService().deleteKeys();
 
+                                SessionManager().clearKeys();
+
                                 ref
                                     .read(authControllerProvider.notifier)
                                     .logout();
+
                                 Navigator.pop(context);
                               },
                               child: const Text(

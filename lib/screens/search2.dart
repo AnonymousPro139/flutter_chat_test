@@ -6,8 +6,7 @@ import 'package:test_firebase/firebase/firestore/services/message/functions.dart
 import 'package:test_firebase/firebase/firestore/services/user/index.dart';
 import 'package:test_firebase/models/user.dart';
 import 'package:test_firebase/riverpod/index.dart';
-import 'package:test_firebase/screens/chat3.dart';
-import 'package:test_firebase/widgets/ChatElement.dart';
+import 'package:test_firebase/screens/chat5.dart';
 
 class GlobalSearchScreen extends ConsumerStatefulWidget {
   const GlobalSearchScreen({super.key});
@@ -296,16 +295,16 @@ class _GlobalSearchScreenState extends ConsumerState<GlobalSearchScreen> {
             resultUser!.id,
           );
 
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ChatScreen3(
-                chatId: createdChatId,
-                title: 'Chat',
-                user: loggedUser,
-              ),
-            ),
-          );
+          // Navigator.push(
+          //   context,
+          //   MaterialPageRoute(
+          //     builder: (context) => ChatScreen5(
+          //       chatId: createdChatId,
+          //       title: 'Chat',
+          //       user: loggedUser,
+          //     ),
+          //   ),
+          // );
         },
         child: const Text("Message"),
       ),

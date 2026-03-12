@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_chat_core/flutter_chat_core.dart' as types;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:test_firebase/crypto/session.dart';
 import 'package:test_firebase/firebase/firestore/services/message/utils.dart';
 import 'package:test_firebase/firebase/index.dart';
 import 'package:test_firebase/firebase/firestore/services/message/handlers.dart';
@@ -26,16 +27,59 @@ final inboxProvider =
     });
 
 // Define the Riverpod StreamProvider for the messages
-final chatMessagesProvider = StreamProvider.family<List<types.Message>, String>(
-  (ref, chatId) {
-    return MessageHandlers().listeningChat(chatId: chatId).map((snapshot) {
-      // Firebase handles the diffs; we just map the current reality.
-      return snapshot.docs
-          .map((doc) => MessageUtils().mapDocToMessage2(doc))
-          .toList();
+// final chatMessagesProvider = StreamProvider.family<List<types.Message>, String>(
+//   (ref, chatId) {
+//     return MessageHandlers().listeningChat(chatId: chatId).map((snapshot) {
+//       // Firebase handles the diffs; we just map the current reality.
+//       return snapshot.docs
+//           .map((doc) => MessageUtils().mapDocToMessage2(doc))
+//           .toList();
+//     });
+//   },
+// );
+
+// final chatMessagesProvider =
+//     StreamProvider.family<
+//       List<types.Message>,
+//       ({String chatId, String receivingKey})
+//     >((ref, args) {
+//       // 2. Access the arguments using args.chatId
+//       return MessageHandlers().listeningChat(chatId: args.chatId).map((
+//         snapshot,
+//       ) {
+//         return snapshot.docs.map((doc) {
+//           // 3. Pass the receivingKey down to your mapping function
+//           // (Assuming you need it in mapDocToMessage2 to decrypt the message)
+//           return MessageUtils().mapDocToMessage2(doc, args.receivingKey);
+//         }).toList();
+//       });
+//     });
+
+final chatMessagesProvider =
+    StreamProvider.family<
+      List<types.Message>,
+      ({String chatId, String myId, String receivingKey, String sendingKey})
+    >((ref, args) {
+      // Note the change from .map to .asyncMap
+      return MessageHandlers().listeningChat(chatId: args.chatId).asyncMap((
+        snapshot,
+      ) async {
+        // 1. Create a list of Futures
+        final futures = snapshot.docs.map((doc) {
+          final data = doc.data();
+          if (data['senderId'] == args.myId) {
+            return MessageUtils().mapDocToMessage5(doc, args.sendingKey);
+          } else {
+            return MessageUtils().mapDocToMessage5(doc, args.receivingKey);
+          }
+        });
+
+        // 2. Wait for all the decryptions in this batch to finish simultaneously
+        final resolvedMessages = await Future.wait(futures);
+
+        return resolvedMessages;
+      });
     });
-  },
-);
 
 final friendsProvider = StreamProvider.family<List<AppUser>, String>((
   ref,
@@ -132,3 +176,8 @@ final chatProfilesProvider =
 final bottomNavIndexProvider = StateProvider<int>(
   (ref) => 0,
 ); // chat leave hiih ued butsaj home-ruu shiljihed aldaa garaad bsn uchir
+
+// This acts as your global, in-memory dependency injector.
+final sessionProvider = Provider<SessionManager>((ref) {
+  return SessionManager();
+});

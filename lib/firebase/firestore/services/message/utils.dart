@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_chat_core/flutter_chat_core.dart';
+import 'package:test_firebase/crypto/chacha.dart';
 
 class MessageUtils {
   // types.Message firestoreToTextMessage2(
@@ -50,7 +51,96 @@ class MessageUtils {
     }
   }
 
-  Message mapDocToMessage2(DocumentSnapshot<Map<String, dynamic>> doc) {
+  // Message mapDocToMessage2(
+  //   DocumentSnapshot<Map<String, dynamic>> doc,
+  //   String receivingKey,
+  // ) {
+  //   try {
+  //     final data = doc.data();
+
+  //     final createdAt = data?['createdAt'] is Timestamp
+  //         ? (data?['createdAt'] as Timestamp).toDate()
+  //         : (data?['createdAt'] is String
+  //               ? DateTime.parse(data?['createdAt']).toUtc()
+  //               : DateTime.fromMillisecondsSinceEpoch(0, isUtc: true));
+
+  //     // var decrypted = '';
+
+  //     // ChaCha20().decrypt(data?['text'], receivingKey).then((res) {
+  //     //   decrypted = res;
+  //     // });
+
+  //     var decrypted =  await ChaCha20().decrypt(data?['text'], receivingKey);
+
+  //     if (data?['type'] == 'text') {
+  //       return TextMessage(
+  //         id: doc.id,
+  //         authorId: data?['senderId'],
+  //         createdAt: createdAt,
+  //         // text: data?['text'],
+  //         text: decrypted,
+  //         replyToMessageId: data?['replyToMessageId'],
+  //         status: MessageStatus.sent,
+  //       );
+  //     } else {
+  //       if (data?['type'] == 'image') {
+  //         return ImageMessage(
+  //           id: doc.id,
+  //           authorId: data?['senderId'],
+  //           createdAt: createdAt,
+  //           source: data?['uri'] ?? '',
+  //           status: MessageStatus.sent,
+  //         );
+  //       } else {
+  //         if (data?['type'] == 'file') {
+  //           return FileMessage(
+  //             id: doc.id,
+  //             authorId: data?['senderId'],
+  //             createdAt: createdAt,
+  //             name: data?['uri'],
+  //             size: data?['size'] ?? 0,
+  //             source: data?['uri'] ?? '',
+  //             status: MessageStatus.sent,
+  //           );
+  //         } else {
+  //           if (data?['type'] == 'system') {
+  //             return SystemMessage(
+  //               id: doc.id,
+  //               authorId: data?['senderId'],
+  //               createdAt: createdAt,
+  //               text: data?['text'] ?? '',
+  //               status: MessageStatus.sent,
+  //             );
+  //           } else {
+  //             return TextMessage(
+  //               id: doc.id,
+  //               authorId: data?['senderId'],
+  //               createdAt: createdAt,
+  //               text: decrypted, // data?['text'],
+  //               replyToMessageId: data?['replyToMessageId'],
+  //               status: MessageStatus.sent,
+  //             );
+  //           }
+  //         }
+  //       }
+  //     }
+  //   } catch (e) {
+  //     print('++ Error in mapDocToMessage2: ${e}');
+
+  //     return TextMessage(
+  //       id: doc.id,
+  //       authorId: "123",
+  //       createdAt: null,
+  //       text: 'Erorr shuu',
+  //       status: MessageStatus.sent,
+  //     );
+  //   }
+  // }
+
+  Message mapDocToMessage2(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+    String receivingKey,
+  ) {
     try {
       final data = doc.data();
 
@@ -59,6 +149,11 @@ class MessageUtils {
           : (data?['createdAt'] is String
                 ? DateTime.parse(data?['createdAt']).toUtc()
                 : DateTime.fromMillisecondsSinceEpoch(0, isUtc: true));
+
+      var decrypted = ChaCha20().decrypt(
+        data?['text'],
+        receivingKey,
+      ); // await is not works in this function
 
       if (data?['type'] == 'text') {
         return TextMessage(
@@ -120,6 +215,89 @@ class MessageUtils {
         createdAt: null,
         text: 'Erorr shuu',
         status: MessageStatus.sent,
+      );
+    }
+  }
+
+  Future<Message> mapDocToMessage5(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+    String ssk,
+  ) async {
+    try {
+      final data =
+          doc.data() ?? {}; // Default to empty map to avoid null errors
+
+      final createdAt = data['createdAt'] is Timestamp
+          ? (data['createdAt'] as Timestamp).toDate()
+          : (data['createdAt'] is String
+                ? DateTime.parse(data['createdAt']).toUtc()
+                : DateTime.fromMillisecondsSinceEpoch(0, isUtc: true));
+
+      // 2. Safely Decrypt ONLY if text exists
+      String decryptedText = '';
+      if (data['text'] != null && data['text'].toString().isNotEmpty) {
+        // Now await works perfectly!
+        decryptedText = await ChaCha20().decrypt(data['text'], ssk);
+      }
+
+      // 3. Clean routing using a Switch statement instead of nested if/else
+      final type = data['type'] ?? 'text';
+
+      switch (type) {
+        case 'image':
+          return ImageMessage(
+            id: doc.id,
+            authorId: data['senderId'] ?? '',
+            createdAt: createdAt,
+            source: data['uri'] ?? '',
+            status: MessageStatus.sent,
+          );
+        case 'file':
+          return FileMessage(
+            id: doc.id,
+            authorId: data['senderId'] ?? '',
+            createdAt: createdAt,
+            name: data['uri'] ?? 'file',
+            size: data['size'] ?? 0,
+            source: data['uri'] ?? '',
+            status: MessageStatus.sent,
+          );
+        case 'system':
+          return SystemMessage(
+            id: doc.id,
+            authorId: data['senderId'] ?? '',
+            createdAt: createdAt,
+            text: data['text'] ?? '',
+            status: MessageStatus.sent,
+          );
+        case 'text':
+          return TextMessage(
+            id: doc.id,
+            authorId: data['senderId'] ?? '',
+            createdAt: createdAt,
+            text: decryptedText, // Use the awaited decrypted text here!
+            replyToMessageId: data['replyToMessageId'],
+            status: MessageStatus.sent,
+          );
+        default:
+          return TextMessage(
+            id: doc.id,
+            authorId: data['senderId'] ?? '',
+            createdAt: createdAt,
+            text: decryptedText, // Use the awaited decrypted text here!
+            replyToMessageId: data['replyToMessageId'],
+            status: MessageStatus.sent,
+          );
+      }
+    } catch (e) {
+      print('++ Error in mapDocToMessage2: $e');
+
+      return TextMessage(
+        id: doc.id,
+        authorId: "error_user",
+        createdAt: null,
+        text: 'Error decrypting message',
+        status: MessageStatus.error,
       );
     }
   }

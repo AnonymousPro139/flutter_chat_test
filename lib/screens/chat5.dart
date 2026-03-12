@@ -8,6 +8,7 @@ import 'package:flutter_chat_core/flutter_chat_core.dart' as types;
 import 'package:flyer_chat_file_message/flyer_chat_file_message.dart';
 import 'package:flyer_chat_text_message/flyer_chat_text_message.dart';
 import 'package:flyer_chat_image_message/flyer_chat_image_message.dart';
+import 'package:test_firebase/crypto/chacha.dart';
 import 'package:test_firebase/firebase/firestore/services/group/index.dart';
 import 'package:test_firebase/firebase/firestore/services/message/functions.dart';
 import 'package:test_firebase/firebase/storage/index.dart';
@@ -23,12 +24,19 @@ class ChatScreen5 extends ConsumerStatefulWidget {
   final AppUser user;
   final String chatId;
   final String title;
+  final String idPubKey;
+  final String epPubKey;
+  final String spPubKey;
 
   const ChatScreen5({
     super.key,
     required this.user,
     required this.chatId,
     required this.title,
+
+    required this.idPubKey,
+    required this.epPubKey,
+    required this.spPubKey,
   });
 
   @override
@@ -38,15 +46,48 @@ class ChatScreen5 extends ConsumerStatefulWidget {
 class _ChatScreenState extends ConsumerState<ChatScreen5> {
   final _chatController = InMemoryChatController();
   types.TextMessage? _replyingTo;
+  ({String sending, String receiving})? _sessionKeys;
 
   @override
   void initState() {
     super.initState();
-    // _initController();
 
-    // Use addPostFrameCallback to ensure ref is ready and provider is active
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initController();
+    // _initialize();
+    // // Use addPostFrameCallback to ensure ref is ready and provider is active
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   _initController();
+    // });
+
+    // Call the async wrapper, but don't await it (since initState can't be async)
+    _runStartupSequence();
+  }
+
+  Future<void> _runStartupSequence() async {
+    // 1. Await the initialization to ensure _sessionKeys is fully populated
+    await _initialize();
+
+    // 2. CRITICAL: Always check if the widget is still mounted after an `await`
+    // If the user navigates away before _initialize finishes, this prevents crashes.
+    if (!mounted) return;
+
+    // 3. Now it is 100% safe to initialize your controller and use ref.read
+    _initController();
+  }
+
+  Future<void> _initialize() async {
+    // 2. Read the manager from Riverpod and get the key
+    final manager = ref.read(sessionProvider);
+
+    final keys = await manager.getSharedSecretKeys(
+      chatId: widget.chatId,
+      otherIdPubKey: widget.idPubKey,
+      otherEphPubKey: widget.epPubKey,
+      otherSPpubKey: widget.spPubKey,
+    );
+
+    // 3. Update the UI state so you can start decrypting messages
+    setState(() {
+      _sessionKeys = keys;
     });
   }
 
@@ -61,7 +102,23 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
     // }
 
     // 2. FIXED: Access the value properly from the AsyncValue
-    final messagesAsync = ref.read(chatMessagesProvider(widget.chatId));
+    // final messagesAsync = ref.read(
+    //   chatMessagesProvider(widget.chatId, _sessionKeys!.receiving),
+    // );
+
+    // final messagesAsync = ref.read(
+    //   chatMessagesProvider(widget.chatId, _sessionKeys!.receiving),
+    // );
+
+    final messagesAsync = ref.read(
+      chatMessagesProvider((
+        chatId: widget.chatId,
+        myId: widget.user.id,
+
+        receivingKey: _sessionKeys!.receiving,
+        sendingKey: _sessionKeys!.sending,
+      )),
+    );
 
     // messagesAsync.whenData((messages) {
     //   _chatController.setMessages(messages, animated: false);
@@ -242,10 +299,29 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
 
   @override
   Widget build(BuildContext context) {
+    // 1. Guard clause: If keys are not ready, show a loading screen.
+    if (_sessionKeys == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     //1. LISTEN for changes only.
     // This handles the real-time "push" to the controller.
+    // ref.listen<AsyncValue<List<types.Message>>>(
+    //   chatMessagesProvider(widget.chatId),
+    //   (previous, next) {
+    //     if (next is AsyncData<List<types.Message>>) {
+    //       // animated: true allows the chat UI to slide new messages in nicely
+    //       _chatController.setMessages(next.value, animated: false); // true
+    //     }
+    //   },
+    // );
     ref.listen<AsyncValue<List<types.Message>>>(
-      chatMessagesProvider(widget.chatId),
+      chatMessagesProvider((
+        chatId: widget.chatId,
+        myId: widget.user.id,
+        receivingKey: _sessionKeys!.receiving,
+        sendingKey: _sessionKeys!.sending,
+      )),
       (previous, next) {
         if (next is AsyncData<List<types.Message>>) {
           // animated: true allows the chat UI to slide new messages in nicely
@@ -257,7 +333,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
     // 2. WATCH for the initial status (Loading/Error)
     // We don't use the 'data' here to build the list directly because
     // the Chat widget uses the controller instead.
-    final messagesAsync = ref.watch(chatMessagesProvider(widget.chatId));
+    // final messagesAsync = ref.watch(chatMessagesProvider(widget.chatId));
+    final messagesAsync = ref.watch(
+      chatMessagesProvider((
+        chatId: widget.chatId,
+        myId: widget.user.id,
+        receivingKey: _sessionKeys!.receiving,
+        sendingKey: _sessionKeys!.sending,
+      )),
+    );
+
     final friends =
         ref.watch(friendsProvider(widget.user.id)).value ??
         []; // Bur gadna tald n baij bgaad param-r orj ireh ??
@@ -292,9 +377,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+
+                  // Text(
+                  //   "Online", // Or fetch real status
+                  //   style: TextStyle(fontSize: 12, color: Colors.green[600]),
+                  // ),
                   Text(
-                    "Online", // Or fetch real status
-                    style: TextStyle(fontSize: 12, color: Colors.green[600]),
+                    "Send: ${_sessionKeys?.sending.substring(0, 12)}", // Or fetch real status
+                    style: TextStyle(fontSize: 10, color: Colors.blue[600]),
+                  ),
+                  Text(
+                    "Rec: ${_sessionKeys?.receiving.substring(0, 12)}", // Or fetch real status
+                    style: TextStyle(fontSize: 10, color: Colors.red[600]),
                   ),
                 ],
               ),
@@ -517,10 +611,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
   }
 
   Future<void> _handleMessageSend(String text) async {
+    final encrypted = await ChaCha20().encrypt(text, _sessionKeys!.sending);
+
     MessageFunctions().sendMessage(
       chatId: widget.chatId,
       sender: widget.user,
-      text: text,
+      text: encrypted,
+      // text: text,
       // Pass the reply context if needed for your database design:
       // replyToMessageId: _replyingTo?.id,
     );
