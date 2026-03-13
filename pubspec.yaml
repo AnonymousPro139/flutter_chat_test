@@ -54,6 +54,7 @@ dependencies:
   flutter_secure_storage: ^10.0.0
   pinput: ^6.0.2
   cryptography_flutter: ^2.3.4
+  path_provider: ^2.1.5
 
 dev_dependencies:
   flutter_test:

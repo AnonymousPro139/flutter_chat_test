@@ -49,6 +49,7 @@ class ChatGalleryScreen extends StatelessWidget {
                       uri: data['uri'],
                       isImage: isImage,
                       fileName: data['name'] ?? 'Untitled',
+                      isCache: true,
                     ),
                   ),
                 ),

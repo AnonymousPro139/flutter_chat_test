@@ -466,6 +466,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
                             //   ),
                             // );
 
+                            print('click: ${message.source}');
+
                             Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -473,6 +475,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
                                   uri: message.source,
                                   isImage: true,
                                   fileName: message.source,
+                                  isCache: true,
                                 ),
                               ),
                             );
@@ -596,13 +599,22 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
     if (result != null) {
       File file = File(result.files.single.path!);
 
-      String downloadUrl = await uploadImage(widget.chatId, file.path);
+      final bytes = await ChaCha20().encryptFile(
+        inputFile: file,
+        ssk: _sessionKeys!.sending,
+      );
+
+      String downloadUrl = await FbStorage().uploadImage2(
+        widget.chatId,
+        bytes,
+        result.files.single.name,
+      );
 
       if (downloadUrl != '') {
         MessageFunctions().sendFileMessage(
           chatId: widget.chatId,
           sender: widget.user,
-          filename: file.path,
+          filename: result.files.single.name,
           uri: downloadUrl,
           size: result.files.single.size,
         );

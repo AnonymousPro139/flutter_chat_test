@@ -68,9 +68,17 @@ final chatMessagesProvider =
         final futures = snapshot.docs.map((doc) {
           final data = doc.data();
           if (data['senderId'] == args.myId) {
-            return MessageUtils().mapDocToMessage5(doc, args.sendingKey);
+            return MessageUtils().mapDocToMessage5(
+              doc,
+              args.sendingKey,
+              args.chatId,
+            );
           } else {
-            return MessageUtils().mapDocToMessage5(doc, args.receivingKey);
+            return MessageUtils().mapDocToMessage5(
+              doc,
+              args.receivingKey,
+              args.chatId,
+            );
           }
         });
 

@@ -6,12 +6,14 @@ class MediaViewerScreen extends StatelessWidget {
   final String uri;
   final String fileName;
   final bool isImage;
+  final bool isCache;
 
   const MediaViewerScreen({
     super.key,
     required this.uri,
     this.fileName = "File",
     required this.isImage,
+    required this.isCache,
   });
 
   Future<void> _openFile() async {
@@ -33,12 +35,26 @@ class MediaViewerScreen extends StatelessWidget {
       body: Center(
         child: isImage
             ? InteractiveViewer(
-                child: Image.network(
-                  uri,
-                  loadingBuilder: (context, child, progress) => progress == null
-                      ? child
-                      : const CircularProgressIndicator(),
-                ),
+                child: isCache
+                    ? Image.file(
+                        File(uri),
+                        fit: BoxFit.cover,
+                        // Local files load almost instantly, so there is no 'loadingBuilder'.
+                        // However, it is highly recommended to use an 'errorBuilder'
+                        // just in case the file was accidentally deleted from the cache.
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Center(
+                            child: Icon(Icons.broken_image, color: Colors.grey),
+                          );
+                        },
+                      )
+                    : Image.network(
+                        uri,
+                        loadingBuilder: (context, child, progress) =>
+                            progress == null
+                            ? child
+                            : const CircularProgressIndicator(),
+                      ),
               )
             : Column(
                 mainAxisAlignment: MainAxisAlignment.center,

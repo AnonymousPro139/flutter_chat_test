@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:test_firebase/const.dart';
 import 'package:test_firebase/firebase/index.dart';
+import 'package:test_firebase/firebase/storage/index.dart';
 import 'package:test_firebase/models/user.dart';
-import 'package:path/path.dart' as p;
 
 class MessageFunctions extends FirestoreService {
   Future<String> createOrGetChat(
@@ -68,7 +68,9 @@ class MessageFunctions extends FirestoreService {
       'size': size,
       'createdAt': FieldValue.serverTimestamp(),
       'type':
-          imageExtensions.contains(p.extension(filename).replaceFirst('.', ''))
+          imageExtensions.contains(
+            FbStorage().getExtension(filename).replaceFirst('.', ''),
+          )
           ? 'image'
           : "file",
     });
