@@ -11,6 +11,7 @@ import 'package:flyer_chat_image_message/flyer_chat_image_message.dart';
 import 'package:test_firebase/crypto/chacha.dart';
 import 'package:test_firebase/firebase/firestore/services/group/index.dart';
 import 'package:test_firebase/firebase/firestore/services/message/functions.dart';
+import 'package:test_firebase/firebase/index.dart';
 import 'package:test_firebase/firebase/storage/index.dart';
 import 'package:test_firebase/riverpod/providers.dart';
 import 'package:test_firebase/screens/ChatGallery.dart';
@@ -451,7 +452,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
                     chatController: _chatController,
                     currentUserId: widget.me.id,
                     builders: _buildersChat(),
-                    onMessageLongPress: _handleMessageLongPress,
+                    // onMessageLongPress: _handleMessageLongPress,
+                    onMessageLongPress: _handleSecondaryTap,
                     resolveUser: (id) {
                       return Future.value(
                         types.User(id: id, name: "Loading..."),
@@ -501,29 +503,120 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
     );
   }
 
+  Widget _buildReactionsUI(types.Message message, bool isSentByMe) {
+    // 1. If there are no reactions, draw nothing.
+    if (message.reactions == null || message.reactions!.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    // 2. Draw the emojis!
+    return Padding(
+      padding: const EdgeInsets.only(top: 0, left: 12, right: 12, bottom: 4),
+      child: Wrap(
+        spacing: 4,
+        runSpacing: 4,
+        // Align to the right for your messages, left for others
+        alignment: isSentByMe ? WrapAlignment.end : WrapAlignment.start,
+        children: message.reactions!.entries.map((entry) {
+          final emoji = entry.key;
+          final count = entry.value.length;
+          // Check if the current user clicked this emoji so we can highlight it
+          final didIReact = entry.value.contains(widget.me.id);
+
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            decoration: BoxDecoration(
+              color: didIReact
+                  ? Theme.of(context).primaryColor.withOpacity(0.15)
+                  : Colors.grey.shade200,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: didIReact
+                    ? Theme.of(context).primaryColor
+                    : Colors.grey.shade300,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(emoji, style: const TextStyle(fontSize: 14)),
+                // Only show the number if more than 1 person reacted
+                if (count > 1) ...[
+                  const SizedBox(width: 4),
+                  Text(
+                    '$count',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: didIReact
+                          ? Theme.of(context).primaryColor
+                          : Colors.black54,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
   Builders _buildersChat() {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Builders(
       textMessageBuilder:
           (context, message, index, {required isSentByMe, groupStatus}) {
-            return FlyerChatTextMessage(
-              message: message,
-              index: index,
-              // --- Sent Message Style (Right Side) ---
-              sentBackgroundColor: colorScheme.primary,
-              sentTextStyle: const TextStyle(
-                color: Colors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.w400,
-              ),
-              // --- Received Message Style (Left Side) ---
-              receivedBackgroundColor: const Color.fromARGB(255, 245, 240, 240),
-              receivedTextStyle: const TextStyle(
-                color: Colors.black87,
-                fontSize: 15,
-                fontWeight: FontWeight.w400,
-              ),
+            // return FlyerChatTextMessage(
+            //   message: message,
+            //   index: index,
+            //   // --- Sent Message Style (Right Side) ---
+            //   sentBackgroundColor: colorScheme.primary,
+            //   sentTextStyle: const TextStyle(
+            //     color: Colors.white,
+            //     fontSize: 15,
+            //     fontWeight: FontWeight.w400,
+            //   ),
+            //   // --- Received Message Style (Left Side) ---
+            //   receivedBackgroundColor: const Color.fromARGB(255, 245, 240, 240),
+            //   receivedTextStyle: const TextStyle(
+            //     color: Colors.black87,
+            //     fontSize: 15,
+            //     fontWeight: FontWeight.w400,
+            //   ),
+            // );
+
+            return Column(
+              crossAxisAlignment: isSentByMe
+                  ? CrossAxisAlignment.end
+                  : CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FlyerChatTextMessage(
+                  message: message,
+                  index: index,
+                  sentBackgroundColor: colorScheme.primary,
+                  sentTextStyle: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w400,
+                  ),
+                  receivedBackgroundColor: const Color.fromARGB(
+                    255,
+                    245,
+                    240,
+                    240,
+                  ),
+                  receivedTextStyle: const TextStyle(
+                    color: Colors.black87,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                // ADD THE REACTIONS HERE!
+                _buildReactionsUI(message, isSentByMe),
+              ],
             );
           },
       systemMessageBuilder:
@@ -597,6 +690,160 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
         ],
       ),
     );
+  }
+
+  Future<void> _handleSecondaryTap(
+    BuildContext context,
+    types.Message message, {
+    required details,
+    required int index,
+  }) async {
+    final List<String> availableEmojis = ['❤️', '👍', '😂', '😮', '😢', '🙏'];
+
+    // 2. Show the BottomSheet and wait for the user's selection
+    final selectedEmoji = await showModalBottomSheet<String>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (BuildContext bottomSheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min, // Wrap content height
+              children: [
+                const Text(
+                  'Add a reaction',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                // Use Wrap to automatically space the emojis nicely
+                Wrap(
+                  spacing: 24,
+                  runSpacing: 16,
+                  alignment: WrapAlignment.center,
+                  children: availableEmojis.map((emoji) {
+                    return GestureDetector(
+                      // When tapped, close the sheet and pass the emoji back
+                      onTap: () => Navigator.pop(bottomSheetContext, emoji),
+                      child: Text(
+                        emoji,
+                        style: const TextStyle(
+                          fontSize: 32,
+                        ), // Make them big and tappable
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    // 3. If the user tapped outside the sheet or didn't pick anything, stop here.
+    if (selectedEmoji == null) return;
+
+    // 4. Apply the selected emoji to the message
+    _toggleReaction(message, selectedEmoji);
+  }
+
+  // Future<void> _toggleReaction(types.Message message, String emojiType) async {
+  //   final currentUserId = widget.me.id;
+
+  //   // 1. Get current metadata and reactions
+  //   final Map<String, dynamic> metadata = Map<String, dynamic>.from(
+  //     message.metadata ?? {},
+  //   );
+  //   final List<dynamic> reactions = List.from(metadata['reactions'] ?? []);
+
+  //   // 2. Find if this user already reacted with this exact emoji
+  //   final existingIndex = reactions.indexWhere(
+  //     (r) => r['userId'] == currentUserId && r['type'] == emojiType,
+  //   );
+
+  //   // 3. Toggle the reaction
+  //   if (existingIndex != -1) {
+  //     reactions.removeAt(existingIndex); // Remove it
+  //   } else {
+  //     reactions.add({
+  //       'userId': currentUserId,
+  //       'type': emojiType,
+  //       'createdAt': DateTime.now().millisecondsSinceEpoch,
+  //     }); // Add it
+  //   }
+
+  //   // 4. Update the metadata map
+  //   metadata['reactions'] = reactions;
+
+  //   try {
+  //     // 5. Update Firestore directly!
+  //     // Because your Riverpod provider is watching this collection,
+  //     // updating this document will automatically refresh your UI.
+  //     await FirestoreService().firestore
+  //         .collection('chats')
+  //         .doc(widget.chatId)
+  //         .collection('messages')
+  //         .doc(
+  //           message.id,
+  //         ) // Ensure your message.id matches the Firestore document ID
+  //         .update({'metadata': metadata});
+  //   } catch (e) {
+  //     print('Failed to update reaction: $e');
+  //     // Optional: Show a SnackBar to the user if the network request fails
+  //   }
+  // }
+
+  Future<void> _toggleReaction(types.Message message, String emojiType) async {
+    final currentUserId = widget.me.id;
+
+    // 1. Grab the current reactions directly from the message object.
+    // We make a deep copy of the map so we can safely modify it.
+    final Map<String, List<String>> currentReactions = {};
+
+    if (message.reactions != null) {
+      message.reactions!.forEach((key, value) {
+        currentReactions[key] = List<String>.from(value);
+      });
+    }
+
+    // 2. Get the list of users who have already reacted with this specific emoji.
+    // If no one has used this emoji yet, we start with an empty list.
+    final List<String> usersWhoReacted = currentReactions[emojiType] ?? [];
+
+    // 3. Toggle logic!
+    if (usersWhoReacted.contains(currentUserId)) {
+      // TOGGLE OFF: The user already clicked this emoji, so we remove their ID.
+      usersWhoReacted.remove(currentUserId);
+
+      if (usersWhoReacted.isEmpty) {
+        // Clean up: If they were the only person to use this emoji,
+        // completely remove the emoji key from the map so we don't have an empty bubble.
+        currentReactions.remove(emojiType);
+      } else {
+        currentReactions[emojiType] = usersWhoReacted;
+      }
+    } else {
+      // TOGGLE ON: The user hasn't clicked this emoji yet, so we add their ID.
+      usersWhoReacted.add(currentUserId);
+      currentReactions[emojiType] = usersWhoReacted;
+    }
+
+    try {
+      // 4. Update Firestore
+      // Note: We are saving this to the 'reactions' field at the root of the document,
+      // which matches how we parsed `data['reactions']` in the previous step.
+      await FirestoreService().firestore
+          .collection('chats')
+          .doc(widget.chatId)
+          .collection('messages')
+          .doc(message.id)
+          .update({'reactions': currentReactions});
+    } catch (e) {
+      print('Failed to update reaction: $e');
+    }
   }
 
   Future<void> _handleAttachmentTap() async {
