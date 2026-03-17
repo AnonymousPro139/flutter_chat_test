@@ -154,12 +154,12 @@ class HomeScreen4 extends ConsumerWidget {
               return ChatElement(
                 chatId: doc.id,
                 title: data["title"],
-                user: user,
+                me: user,
                 lastMessage: data['lastMessageText'] ?? '',
                 lastMessageAt: data['lastMessageAt'],
-                idPubKey: data["idPubKey"],
-                epPubKey: data["epPubKey"],
-                spPubKey: data["spPubKey"],
+                idPubKey: data["idPubKey"] ?? '',
+                epPubKey: data["epPubKey"] ?? '',
+                spPubKey: data["spPubKey"] ?? '',
               );
             },
           );

@@ -14,6 +14,7 @@ import 'package:test_firebase/firebase/firestore/services/message/functions.dart
 import 'package:test_firebase/firebase/storage/index.dart';
 import 'package:test_firebase/riverpod/providers.dart';
 import 'package:test_firebase/screens/ChatGallery.dart';
+import 'package:test_firebase/screens/ChatGallery2.dart';
 import 'package:test_firebase/screens/MediaViewerScreen.dart';
 import 'package:test_firebase/widgets/AddParticipantsDialog.dart';
 import 'package:test_firebase/widgets/ShowParticipants.dart';
@@ -21,7 +22,7 @@ import 'package:test_firebase/widgets/replyPreview.dart';
 import 'package:test_firebase/models/user.dart';
 
 class ChatScreen5 extends ConsumerStatefulWidget {
-  final AppUser user;
+  final AppUser me;
   final String chatId;
   final String title;
   final String idPubKey;
@@ -30,7 +31,7 @@ class ChatScreen5 extends ConsumerStatefulWidget {
 
   const ChatScreen5({
     super.key,
-    required this.user,
+    required this.me,
     required this.chatId,
     required this.title,
 
@@ -113,7 +114,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
     final messagesAsync = ref.read(
       chatMessagesProvider((
         chatId: widget.chatId,
-        myId: widget.user.id,
+        myId: widget.me.id,
 
         receivingKey: _sessionKeys!.receiving,
         sendingKey: _sessionKeys!.sending,
@@ -211,21 +212,25 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
                 ),
               ),
               ListTile(
-                leading: const Icon(Icons.people),
+                leading: const Icon(Icons.image),
                 title: const Text("Show files"),
 
                 onTap: () {
+                  Navigator.pop(context);
+
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          ChatGalleryScreen(chatId: widget.chatId),
+                      builder: (context) => ChatGalleryScreen2(
+                        chatId: widget.chatId,
+                        me: widget.me,
+                        sessionKeys: _sessionKeys!,
+                      ),
                     ),
                   );
                 },
               ),
 
-              const Divider(),
               ListTile(
                 leading: const Icon(Icons.people),
                 title: const Text("Show participants"),
@@ -275,9 +280,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
                 onTap: () {
                   Navigator.pop(context);
 
-                  _confirmLeaveGroup(context, widget.chatId, widget.user.id);
+                  _confirmLeaveGroup(context, widget.chatId, widget.me.id);
                 },
               ),
+              const Divider(),
 
               ListTile(
                 leading: const Icon(Icons.cancel_outlined),
@@ -318,7 +324,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
     ref.listen<AsyncValue<List<types.Message>>>(
       chatMessagesProvider((
         chatId: widget.chatId,
-        myId: widget.user.id,
+        myId: widget.me.id,
         receivingKey: _sessionKeys!.receiving,
         sendingKey: _sessionKeys!.sending,
       )),
@@ -337,14 +343,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
     final messagesAsync = ref.watch(
       chatMessagesProvider((
         chatId: widget.chatId,
-        myId: widget.user.id,
+        myId: widget.me.id,
         receivingKey: _sessionKeys!.receiving,
         sendingKey: _sessionKeys!.sending,
       )),
     );
 
     final friends =
-        ref.watch(friendsProvider(widget.user.id)).value ??
+        ref.watch(friendsProvider(widget.me.id)).value ??
         []; // Bur gadna tald n baij bgaad param-r orj ireh ??
     final participants =
         ref.watch(participantProfilesProvider(widget.chatId)).value ?? [];
@@ -443,7 +449,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
 
                   return Chat(
                     chatController: _chatController,
-                    currentUserId: widget.user.id,
+                    currentUserId: widget.me.id,
                     builders: _buildersChat(),
                     onMessageLongPress: _handleMessageLongPress,
                     resolveUser: (id) {
@@ -613,7 +619,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
       if (downloadUrl != '') {
         MessageFunctions().sendFileMessage(
           chatId: widget.chatId,
-          sender: widget.user,
+          sender: widget.me,
           filename: result.files.single.name,
           uri: downloadUrl,
           size: result.files.single.size,
@@ -627,7 +633,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
 
     MessageFunctions().sendMessage(
       chatId: widget.chatId,
-      sender: widget.user,
+      sender: widget.me,
       text: encrypted,
       // text: text,
       // Pass the reply context if needed for your database design:

@@ -34,4 +34,19 @@ class LocalStorageService {
 
     return tempFile.path;
   }
+
+  Future<String> isExistTemporaryFile({
+    required String fname,
+    required String ext,
+  }) async {
+    final tempDir = await getTemporaryDirectory();
+
+    final tempFile = File('${tempDir.path}/dec_${fname}.${ext}');
+
+    if (await tempFile.exists()) {
+      return tempFile.path;
+    } else {
+      return '';
+    }
+  }
 }

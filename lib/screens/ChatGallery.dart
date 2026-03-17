@@ -1,12 +1,22 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:test_firebase/crypto/utils.dart';
 import 'package:test_firebase/firebase/index.dart';
+import 'package:test_firebase/models/user.dart';
 import 'package:test_firebase/screens/MediaViewerScreen.dart';
 
 class ChatGalleryScreen extends StatelessWidget {
+  final AppUser me;
   final String chatId;
 
-  const ChatGalleryScreen({super.key, required this.chatId});
+  final ({String sending, String receiving}) sessionKeys;
+
+  const ChatGalleryScreen({
+    super.key,
+    required this.me,
+    required this.chatId,
+    required this.sessionKeys,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -22,8 +32,9 @@ class ChatGalleryScreen extends StatelessWidget {
             .orderBy('createdAt', descending: false)
             .snapshots(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData)
+          if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
+          }
 
           final docs = snapshot.data!.docs;
 
@@ -40,6 +51,27 @@ class ChatGalleryScreen extends StatelessWidget {
             itemBuilder: (context, index) {
               final data = docs[index].data() as Map<String, dynamic>;
               final isImage = data['type'] == 'image';
+
+              // end decrypt file hiine!
+              // if (data["senderId"] == me.id) {
+              //   // decrypt
+
+              //   final fpath = await fetchFileDecryptAndCreateTempFile(
+              //     chatId: chatId,
+              //     fileUrl: data["name"],
+              //     ssk: sessionKeys.sending,
+              //     uniqueId: docs[index].id,
+              //   );
+              // } else {
+              //   // decrypt
+
+              //     final fpath = await fetchFileDecryptAndCreateTempFile(
+              //     chatId: chatId,
+              //     fileUrl: data["name"],
+              //     ssk: sessionKeys.receiving,
+              //     uniqueId: docs[index].id,
+              //   );
+              // }
 
               return GestureDetector(
                 onTap: () => Navigator.push(

@@ -11,14 +11,14 @@ class ChatElement extends StatelessWidget {
     required this.title,
     required this.lastMessage,
     required this.lastMessageAt,
-    required this.user,
+    required this.me,
 
     required this.idPubKey,
     required this.epPubKey,
     required this.spPubKey,
   });
 
-  final AppUser user;
+  final AppUser me;
   final String chatId;
   final String title;
   final String lastMessage;
@@ -94,7 +94,7 @@ class ChatElement extends StatelessWidget {
   Future<void> _confirmAndHideChat(BuildContext context, String chatId) async {
     try {
       // 1. Delete only the local user's reference
-      await UserFirestoreService().hideChatForMe(user.id, chatId);
+      await UserFirestoreService().hideChatForMe(me.id, chatId);
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -134,7 +134,7 @@ class ChatElement extends StatelessWidget {
           context,
           MaterialPageRoute(
             builder: (_) => ChatScreen5(
-              user: user,
+              me: me,
               title: title,
               chatId: chatId,
               idPubKey: idPubKey,

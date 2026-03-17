@@ -7,6 +7,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_chat_core/flutter_chat_core.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:test_firebase/crypto/chacha.dart';
+import 'package:test_firebase/crypto/utils.dart';
 import 'package:test_firebase/firebase/storage/index.dart';
 import 'package:test_firebase/localstorage/index.dart';
 
@@ -247,25 +248,16 @@ class MessageUtils {
 
       switch (type) {
         case 'image':
-          final Uint8List bytes = await FbStorage().fetchEncryptedFileData(
+          final fpath = await fetchFileDecryptAndCreateTempFile(
             chatId: chatId,
-            fname: data["name"],
-          );
-
-          final Uint8List decryptedBytes = await ChaCha20().decryptFile(
-            encryptedBytes: bytes,
-            key: ssk,
-          );
-
-          final fpath = await LocalStorageService().createTemporaryFile(
-            decryptedBytes: decryptedBytes,
-            fname: doc.id,
-            ext: FbStorage().getExtension(data["name"]),
+            fileUrl: data["name"],
+            ssk: ssk,
+            uniqueId: doc.id,
           );
 
           return ImageMessage(
             id: doc.id,
-            authorId: data['senderId'] ?? '',
+            authorId: data['senderId'],
             createdAt: createdAt,
             text: "Hii brooo",
             // source: data['uri'] ?? '',
@@ -277,7 +269,7 @@ class MessageUtils {
         case 'file':
           return FileMessage(
             id: doc.id,
-            authorId: data['senderId'] ?? '',
+            authorId: data['senderId'],
             createdAt: createdAt,
             name: data['uri'] ?? 'file',
             size: data['size'] ?? 0,
@@ -287,7 +279,7 @@ class MessageUtils {
         case 'system':
           return SystemMessage(
             id: doc.id,
-            authorId: data['senderId'] ?? '',
+            authorId: data['senderId'],
             createdAt: createdAt,
             text: data['text'] ?? '',
             status: MessageStatus.sent,
@@ -302,7 +294,7 @@ class MessageUtils {
 
           return TextMessage(
             id: doc.id,
-            authorId: data['senderId'] ?? '',
+            authorId: data['senderId'],
             createdAt: createdAt,
             text: decryptedText, // Use the awaited decrypted text here!
             replyToMessageId: data['replyToMessageId'],
@@ -311,7 +303,7 @@ class MessageUtils {
         default:
           return TextMessage(
             id: doc.id,
-            authorId: data['senderId'] ?? '',
+            authorId: data['senderId'],
             createdAt: createdAt,
             text: "Unknown! shuu", // Use the awaited decrypted text here!
             replyToMessageId: data['replyToMessageId'],
