@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:test_firebase/const.dart';
 import 'package:test_firebase/firebase/index.dart';
-import 'package:test_firebase/firebase/storage/index.dart';
+import 'package:test_firebase/localstorage/index.dart';
 import 'package:test_firebase/models/user.dart';
 
 class MessageFunctions extends FirestoreService {
@@ -68,8 +67,8 @@ class MessageFunctions extends FirestoreService {
       'size': size,
       'createdAt': FieldValue.serverTimestamp(),
       'type':
-          imageExtensions.contains(
-            FbStorage().getExtension(filename).replaceFirst('.', ''),
+          LocalStorageService().isImage(
+            LocalStorageService().getExtension(filename),
           )
           ? 'image'
           : "file",

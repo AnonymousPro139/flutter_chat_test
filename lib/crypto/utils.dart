@@ -33,7 +33,7 @@ Future<String> fetchFileDecryptAndCreateTempFile({
 }) async {
   final String isExistTemp = await LocalStorageService().isExistTemporaryFile(
     fname: uniqueId,
-    ext: FbStorage().getExtension(fileUrl),
+    ext: LocalStorageService().getExtension(fileUrl),
   );
 
   if (isExistTemp == '') {
@@ -50,7 +50,7 @@ Future<String> fetchFileDecryptAndCreateTempFile({
     final fpath = await LocalStorageService().createTemporaryFile(
       decryptedBytes: decryptedBytes,
       fname: uniqueId,
-      ext: FbStorage().getExtension(fileUrl),
+      ext: LocalStorageService().getExtension(fileUrl),
     );
 
     return fpath;

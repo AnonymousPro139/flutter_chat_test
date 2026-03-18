@@ -26,35 +26,6 @@ final inboxProvider =
           .map((snapshot) => snapshot.docs);
     });
 
-// Define the Riverpod StreamProvider for the messages
-// final chatMessagesProvider = StreamProvider.family<List<types.Message>, String>(
-//   (ref, chatId) {
-//     return MessageHandlers().listeningChat(chatId: chatId).map((snapshot) {
-//       // Firebase handles the diffs; we just map the current reality.
-//       return snapshot.docs
-//           .map((doc) => MessageUtils().mapDocToMessage2(doc))
-//           .toList();
-//     });
-//   },
-// );
-
-// final chatMessagesProvider =
-//     StreamProvider.family<
-//       List<types.Message>,
-//       ({String chatId, String receivingKey})
-//     >((ref, args) {
-//       // 2. Access the arguments using args.chatId
-//       return MessageHandlers().listeningChat(chatId: args.chatId).map((
-//         snapshot,
-//       ) {
-//         return snapshot.docs.map((doc) {
-//           // 3. Pass the receivingKey down to your mapping function
-//           // (Assuming you need it in mapDocToMessage2 to decrypt the message)
-//           return MessageUtils().mapDocToMessage2(doc, args.receivingKey);
-//         }).toList();
-//       });
-//     });
-
 final chatMessagesProvider =
     StreamProvider.family<
       List<types.Message>,

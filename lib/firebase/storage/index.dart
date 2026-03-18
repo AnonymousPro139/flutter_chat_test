@@ -1,9 +1,10 @@
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:path/path.dart' as p;
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:test_firebase/const.dart';
+import 'package:test_firebase/localstorage/index.dart';
 
 class FbStorage {
   final FirebaseStorage fbStorage = FirebaseStorage.instance;
@@ -47,7 +48,7 @@ class FbStorage {
 
   Future<String> uploadImage(String chatId, String path) async {
     try {
-      String extension = getExtension(path);
+      String extension = LocalStorageService().getExtension(path);
       String fileName =
           'chat_${chatId}_${DateTime.now().millisecondsSinceEpoch}.${extension}';
 
@@ -94,7 +95,6 @@ class FbStorage {
       final uploadTask = await storageRef.putData(encryptedBytes);
       final downloadUrl = await uploadTask.ref.getDownloadURL();
 
-      print('Uploaded successfully! URL: $downloadUrl');
       return downloadUrl;
     } catch (e) {
       // 7. Handle any errors (connection issues, permission denied, etc.)
@@ -114,13 +114,9 @@ class FbStorage {
         .child(chatId)
         .child(fname);
 
-    //Note: getData() takes a max size limit. 10MB End bi 2MB gsn bga
-    final Uint8List? bytes = await storageRef.getData(2 * 1024 * 1024);
+    //Note: getData() takes a max size limit. 10MB
+    final Uint8List? bytes = await storageRef.getData(maxFileSize);
 
     return bytes!;
-  }
-
-  String getExtension(String filename) {
-    return p.extension(filename);
   }
 }

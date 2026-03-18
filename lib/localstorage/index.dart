@@ -1,8 +1,11 @@
 import "dart:io";
+import "dart:math";
 import "dart:typed_data";
 
 import "package:flutter_secure_storage/flutter_secure_storage.dart";
 import "package:path_provider/path_provider.dart";
+import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:path/path.dart' as p;
 
 class LocalStorageService {
   final _storage = const FlutterSecureStorage();
@@ -48,5 +51,72 @@ class LocalStorageService {
     } else {
       return '';
     }
+  }
+
+  bool isImage(String ext) {
+    return [
+          '.jpg',
+          '.jpeg',
+          '.png',
+          '.heic',
+          '.gif',
+          '.webp',
+          '.bmp',
+        ].contains(ext)
+        ? true
+        : false;
+  }
+
+  String getExtension(String filename) {
+    return p.extension(filename);
+  }
+
+  String getFileNameWithoutExt(String filename) {
+    return p.basenameWithoutExtension(filename);
+  }
+
+  String getSimpleRandom() {
+    int rnd = Random().nextInt(9000) + 1000;
+
+    return '$rnd';
+  }
+
+  String cutSubStringLast(String str, {int len = 15}) {
+    if (str.length > 10) {
+      int startIndex = (str.length - len).clamp(0, str.length);
+      return str.substring(startIndex);
+    } else {
+      return str;
+    }
+  }
+
+  Future<File> compressImageIfNeeded(File file) async {
+    String extension = p.extension(file.path).toLowerCase();
+
+    if (!isImage(extension)) {
+      return file; // It's a PDF, Video, etc. Return it untouched.
+    }
+
+    // 3. Setup a temporary path for the compressed output
+    final tempDir = await getTemporaryDirectory();
+    final targetPath = p.join(
+      tempDir.path,
+      'compressed_${DateTime.now().millisecondsSinceEpoch}.jpg',
+    );
+
+    // 4. Compress the image
+    // This physically shrinks the dimensions and reduces the JPEG quality
+    XFile? compressedXFile = await FlutterImageCompress.compressAndGetFile(
+      file.path,
+      targetPath,
+      quality: 70, // 70 is the sweet spot for chat apps (great look, tiny size)
+      minWidth: 1080, // Prevent ultra-4K images from freezing the phone
+      minHeight: 1080,
+      format: CompressFormat.jpeg, // Standardize to JPEG to save space
+    );
+
+    if (compressedXFile == null) return file; // Fallback if compression fails
+
+    return File(compressedXFile.path);
   }
 }

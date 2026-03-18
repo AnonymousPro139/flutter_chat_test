@@ -1,10 +1,1 @@
-const imageExtensions = [
-  'jpg',
-  'jpeg',
-  'png',
-  'gif',
-  'webp',
-  'bmp',
-  'heic',
-  'tiff',
-];
+const int maxFileSize = 3 * 1024 * 1024; // 3MB

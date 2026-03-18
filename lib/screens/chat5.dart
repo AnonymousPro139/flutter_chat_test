@@ -8,11 +8,13 @@ import 'package:flutter_chat_core/flutter_chat_core.dart' as types;
 import 'package:flyer_chat_file_message/flyer_chat_file_message.dart';
 import 'package:flyer_chat_text_message/flyer_chat_text_message.dart';
 import 'package:flyer_chat_image_message/flyer_chat_image_message.dart';
+import 'package:test_firebase/const.dart';
 import 'package:test_firebase/crypto/chacha.dart';
 import 'package:test_firebase/firebase/firestore/services/group/index.dart';
 import 'package:test_firebase/firebase/firestore/services/message/functions.dart';
 import 'package:test_firebase/firebase/index.dart';
 import 'package:test_firebase/firebase/storage/index.dart';
+import 'package:test_firebase/localstorage/index.dart';
 import 'package:test_firebase/riverpod/providers.dart';
 import 'package:test_firebase/screens/ChatGallery2.dart';
 import 'package:test_firebase/screens/MediaViewerScreen.dart';
@@ -707,41 +709,75 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
     FilePickerResult? result = await FilePicker.platform.pickFiles();
 
     if (result != null) {
-      int fileSizeInBytes = result.files.single.size;
+      // 1. Grab the original file
+      File originalFile = File(result.files.single.path!);
+      // File fileName = result.files.single.name;
 
-      const int maxFileSize = 2 * 1024 * 1024;
+      // --- NEW: THE MAGIC COMPRESSION STEP ---
+      // This will silently shrink photos. Non-photos are returned untouched.
+      File fileToProcess = await LocalStorageService().compressImageIfNeeded(
+        originalFile,
+      );
+
+      // Recalculate the size AFTER compression
+      int finalSizeBytes = await fileToProcess.length();
+
+      // int fileSizeInBytes = result.files.single.size;
 
       // 3. The Guard Clause: Check and prevent large files
-      if (fileSizeInBytes > maxFileSize) {
+      if (finalSizeBytes > maxFileSize) {
         // Use the SnackBar extension we talked about earlier!
         context.showCustomSnackBar(
-          'File is too large. Please select a file under 2 MB.',
+          'File is too large. Please select a file under 3 MB.',
           isError: true,
         );
 
         return; // STOP EXECUTION HERE. The rest of the function will not run.
       }
 
-      File file = File(result.files.single.path!);
+      context.showWaitSnackBar('Please wait, encrypting file and sending...');
+
+      // File file = File(result.files.single.path!);
 
       final bytes = await ChaCha20().encryptFile(
-        inputFile: file,
+        // inputFile: file,
+        inputFile: fileToProcess,
         ssk: _sessionKeys!.sending,
       );
+
+      final String fname;
+
+      if (LocalStorageService().isImage(
+        LocalStorageService().getExtension(result.files.single.name),
+      )) {
+        fname =
+            "${LocalStorageService().getFileNameWithoutExt(result.files.single.name)}_${LocalStorageService().getSimpleRandom()}.jpg";
+      } else {
+        fname =
+            "${LocalStorageService().getSimpleRandom()}_${result.files.single.name}";
+      }
 
       String downloadUrl = await FbStorage().uploadImage2(
         widget.chatId,
         bytes,
-        result.files.single.name,
+        fname,
       );
 
       if (downloadUrl != '') {
         MessageFunctions().sendFileMessage(
           chatId: widget.chatId,
           sender: widget.me,
-          filename: result.files.single.name,
+          filename: fname,
           uri: downloadUrl,
-          size: result.files.single.size,
+          // size: result.files.single.size,
+          size: finalSizeBytes,
+        );
+        context.showWaitSnackBar('File sent successfully', isLoading: false);
+      } else {
+        context.showWaitSnackBar(
+          'Failed to send file!',
+          isLoading: false,
+          isError: true,
         );
       }
     }
