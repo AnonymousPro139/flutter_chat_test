@@ -406,18 +406,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
                     onMessageTap:
                         (context, message, {required details, required index}) {
                           if (message is types.ImageMessage) {
-                            // Navigator.push(
-                            //   context,
-                            //   MaterialPageRoute(
-                            //     builder: (context) => FullScreenImage(
-                            //       uri: message.source,
-                            //       messageId: message.id,
-                            //     ),
-                            //   ),
-                            // );
-
-                            print('click: ${message.source}');
-
                             Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -510,25 +498,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
     return Builders(
       textMessageBuilder:
           (context, message, index, {required isSentByMe, groupStatus}) {
-            // return FlyerChatTextMessage(
-            //   message: message,
-            //   index: index,
-            //   // --- Sent Message Style (Right Side) ---
-            //   sentBackgroundColor: colorScheme.primary,
-            //   sentTextStyle: const TextStyle(
-            //     color: Colors.white,
-            //     fontSize: 15,
-            //     fontWeight: FontWeight.w400,
-            //   ),
-            //   // --- Received Message Style (Left Side) ---
-            //   receivedBackgroundColor: const Color.fromARGB(255, 245, 240, 240),
-            //   receivedTextStyle: const TextStyle(
-            //     color: Colors.black87,
-            //     fontSize: 15,
-            //     fontWeight: FontWeight.w400,
-            //   ),
-            // );
-
             return Column(
               crossAxisAlignment: isSentByMe
                   ? CrossAxisAlignment.end
@@ -738,6 +707,21 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
     FilePickerResult? result = await FilePicker.platform.pickFiles();
 
     if (result != null) {
+      int fileSizeInBytes = result.files.single.size;
+
+      const int maxFileSize = 2 * 1024 * 1024;
+
+      // 3. The Guard Clause: Check and prevent large files
+      if (fileSizeInBytes > maxFileSize) {
+        // Use the SnackBar extension we talked about earlier!
+        context.showCustomSnackBar(
+          'File is too large. Please select a file under 2 MB.',
+          isError: true,
+        );
+
+        return; // STOP EXECUTION HERE. The rest of the function will not run.
+      }
+
       File file = File(result.files.single.path!);
 
       final bytes = await ChaCha20().encryptFile(
