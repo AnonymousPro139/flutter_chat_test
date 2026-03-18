@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:test_firebase/firebase/firestore/services/user/index.dart';
 import 'package:test_firebase/models/user.dart';
 import 'package:test_firebase/screens/chat5.dart';
+import 'package:test_firebase/widgets/Dialog.dart';
 
 class ChatElement extends StatelessWidget {
   const ChatElement({
@@ -97,15 +98,11 @@ class ChatElement extends StatelessWidget {
       await UserFirestoreService().hideChatForMe(me.id, chatId);
 
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Chat hidden successfully")),
-        );
+        context.showCustomSnackBar("Chat hidden successfully");
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Error hiding chat: $e")));
+        context.showCustomSnackBar("Error hiding chat: $e", isError: true);
       }
     }
   }

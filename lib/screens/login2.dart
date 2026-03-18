@@ -7,6 +7,7 @@ import 'package:test_firebase/firebase/firestore/services/auth/index.dart';
 import 'package:test_firebase/riverpod/index.dart';
 import 'package:test_firebase/screens/otp.dart';
 import 'package:test_firebase/screens/register.dart';
+import 'package:test_firebase/widgets/Dialog.dart';
 
 class LoginScreen2 extends ConsumerStatefulWidget {
   const LoginScreen2({super.key});
@@ -50,9 +51,7 @@ class _LoginScreen2State extends ConsumerState<LoginScreen2> {
         ),
       );
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Error: ${e.toString()}")));
+      context.showCustomSnackBar("Error: ${e.toString()}", isError: true);
     } finally {
       setState(() => _isLoading = false);
     }

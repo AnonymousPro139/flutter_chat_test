@@ -14,10 +14,11 @@ import 'package:test_firebase/firebase/firestore/services/message/functions.dart
 import 'package:test_firebase/firebase/index.dart';
 import 'package:test_firebase/firebase/storage/index.dart';
 import 'package:test_firebase/riverpod/providers.dart';
-import 'package:test_firebase/screens/ChatGallery.dart';
 import 'package:test_firebase/screens/ChatGallery2.dart';
 import 'package:test_firebase/screens/MediaViewerScreen.dart';
 import 'package:test_firebase/widgets/AddParticipantsDialog.dart';
+import 'package:test_firebase/widgets/Dialog.dart';
+import 'package:test_firebase/widgets/ReactionsDialog.dart';
 import 'package:test_firebase/widgets/ShowParticipants.dart';
 import 'package:test_firebase/widgets/replyPreview.dart';
 import 'package:test_firebase/models/user.dart';
@@ -94,24 +95,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
   }
 
   void _initController() async {
-    // We read the provider once to get the current cached data
-    // final initialData = ref.read(
-    //   chatMessagesProvider(widget.chatId),
-    // ); // Here getting error
-
-    // if (initialData.hasValue) {
-    //   _chatController.setMessages(initialData.value!, animated: false);
-    // }
-
-    // 2. FIXED: Access the value properly from the AsyncValue
-    // final messagesAsync = ref.read(
-    //   chatMessagesProvider(widget.chatId, _sessionKeys!.receiving),
-    // );
-
-    // final messagesAsync = ref.read(
-    //   chatMessagesProvider(widget.chatId, _sessionKeys!.receiving),
-    // );
-
     final messagesAsync = ref.read(
       chatMessagesProvider((
         chatId: widget.chatId,
@@ -121,10 +104,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
         sendingKey: _sessionKeys!.sending,
       )),
     );
-
-    // messagesAsync.whenData((messages) {
-    //   _chatController.setMessages(messages, animated: false);
-    // });
 
     if (messagesAsync.hasValue) {
       _chatController.setMessages(messagesAsync.value!, animated: false);
@@ -164,18 +143,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
                 rootRef.read(bottomNavIndexProvider.notifier).state = 0;
                 navigator.popUntil((route) => route.isFirst);
 
-                ScaffoldMessenger.of(navigator.context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      "You left the group",
-                      style: TextStyle(
-                        color: Theme.of(
-                          navigator.context,
-                        ).colorScheme.inversePrimary,
-                      ),
-                    ),
-                  ),
-                );
+                context.showCustomSnackBar("You left the group");
               }
             },
             child: const Text("Leave", style: TextStyle(color: Colors.white)),
@@ -311,17 +279,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    //1. LISTEN for changes only.
-    // This handles the real-time "push" to the controller.
-    // ref.listen<AsyncValue<List<types.Message>>>(
-    //   chatMessagesProvider(widget.chatId),
-    //   (previous, next) {
-    //     if (next is AsyncData<List<types.Message>>) {
-    //       // animated: true allows the chat UI to slide new messages in nicely
-    //       _chatController.setMessages(next.value, animated: false); // true
-    //     }
-    //   },
-    // );
     ref.listen<AsyncValue<List<types.Message>>>(
       chatMessagesProvider((
         chatId: widget.chatId,
@@ -337,10 +294,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
       },
     );
 
-    // 2. WATCH for the initial status (Loading/Error)
-    // We don't use the 'data' here to build the list directly because
-    // the Chat widget uses the controller instead.
-    // final messagesAsync = ref.watch(chatMessagesProvider(widget.chatId));
     final messagesAsync = ref.watch(
       chatMessagesProvider((
         chatId: widget.chatId,
@@ -355,9 +308,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
         []; // Bur gadna tald n baij bgaad param-r orj ireh ??
     final participants =
         ref.watch(participantProfilesProvider(widget.chatId)).value ?? [];
-
-    // Watch the profiles map
-    // final profilesAsync = ref.watch(chatProfilesProvider(widget.chatId));
 
     return SafeArea(
       child: Scaffold(
@@ -385,10 +335,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
                     ),
                   ),
 
-                  // Text(
-                  //   "Online", // Or fetch real status
-                  //   style: TextStyle(fontSize: 12, color: Colors.green[600]),
-                  // ),
                   Text(
                     "Send: ${_sessionKeys?.sending.substring(0, 12)}", // Or fetch real status
                     style: TextStyle(fontSize: 10, color: Colors.blue[600]),
@@ -444,10 +390,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
                 error: (error, stackTrace) =>
                     Center(child: Text('Error shu sda: $error')),
                 data: (_) {
-                  // 3. THE CRITICAL FIX: Wrap the Chat widget in a Provider.
-                  // This ensures that when the Hero "flies" back, the
-                  // FlyerChatImageMessage can still find the ChatController.
-
                   return Chat(
                     chatController: _chatController,
                     currentUserId: widget.me.id,
@@ -642,7 +584,19 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
           },
       fileMessageBuilder:
           (context, message, index, {required isSentByMe, groupStatus}) {
-            return FlyerChatFileMessage(message: message, index: index);
+            // return FlyerChatFileMessage(message: message, index: index);
+
+            return Column(
+              crossAxisAlignment: isSentByMe
+                  ? CrossAxisAlignment.end
+                  : CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FlyerChatFileMessage(message: message, index: index),
+                // ADD THE REACTIONS HERE!
+                _buildReactionsUI(message, isSentByMe),
+              ],
+            );
           },
       imageMessageBuilder:
           (context, message, index, {required isSentByMe, groupStatus}) {
@@ -650,9 +604,23 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
               tag: message.id,
               key: ValueKey('hero-${message.id}'),
 
-              child: FlyerChatImageMessage(
-                message: message,
-                index: index, //ValueKey(message.id),
+              // child: FlyerChatImageMessage(
+              //   message: message,
+              //   index: index, //ValueKey(message.id),
+              // ),
+              child: Column(
+                crossAxisAlignment: isSentByMe
+                    ? CrossAxisAlignment.end
+                    : CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  FlyerChatImageMessage(
+                    message: message,
+                    index: index, //ValueKey(message.id),
+                  ),
+                  // ADD THE REACTIONS HERE!
+                  _buildReactionsUI(message, isSentByMe),
+                ],
               ),
             );
           },
@@ -698,103 +666,23 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
     required details,
     required int index,
   }) async {
-    final List<String> availableEmojis = ['❤️', '👍', '😂', '😮', '😢', '🙏'];
-
-    // 2. Show the BottomSheet and wait for the user's selection
-    final selectedEmoji = await showModalBottomSheet<String>(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (BuildContext bottomSheetContext) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min, // Wrap content height
-              children: [
-                const Text(
-                  'Add a reaction',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
-                // Use Wrap to automatically space the emojis nicely
-                Wrap(
-                  spacing: 24,
-                  runSpacing: 16,
-                  alignment: WrapAlignment.center,
-                  children: availableEmojis.map((emoji) {
-                    return GestureDetector(
-                      // When tapped, close the sheet and pass the emoji back
-                      onTap: () => Navigator.pop(bottomSheetContext, emoji),
-                      child: Text(
-                        emoji,
-                        style: const TextStyle(
-                          fontSize: 32,
-                        ), // Make them big and tappable
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
+    final selectedEmoji = await showReactionsDialog(context);
 
     // 3. If the user tapped outside the sheet or didn't pick anything, stop here.
     if (selectedEmoji == null) return;
 
     // 4. Apply the selected emoji to the message
     _toggleReaction(message, selectedEmoji);
+
+    // MyDialogs().showSnackBar(
+    //   context,
+    //   "Please wait, You're reacted ${selectedEmoji} with this message.",
+    // );
+
+    context.showCustomSnackBar(
+      "Please wait, You're reacted ${selectedEmoji} with this message!",
+    );
   }
-
-  // Future<void> _toggleReaction(types.Message message, String emojiType) async {
-  //   final currentUserId = widget.me.id;
-
-  //   // 1. Get current metadata and reactions
-  //   final Map<String, dynamic> metadata = Map<String, dynamic>.from(
-  //     message.metadata ?? {},
-  //   );
-  //   final List<dynamic> reactions = List.from(metadata['reactions'] ?? []);
-
-  //   // 2. Find if this user already reacted with this exact emoji
-  //   final existingIndex = reactions.indexWhere(
-  //     (r) => r['userId'] == currentUserId && r['type'] == emojiType,
-  //   );
-
-  //   // 3. Toggle the reaction
-  //   if (existingIndex != -1) {
-  //     reactions.removeAt(existingIndex); // Remove it
-  //   } else {
-  //     reactions.add({
-  //       'userId': currentUserId,
-  //       'type': emojiType,
-  //       'createdAt': DateTime.now().millisecondsSinceEpoch,
-  //     }); // Add it
-  //   }
-
-  //   // 4. Update the metadata map
-  //   metadata['reactions'] = reactions;
-
-  //   try {
-  //     // 5. Update Firestore directly!
-  //     // Because your Riverpod provider is watching this collection,
-  //     // updating this document will automatically refresh your UI.
-  //     await FirestoreService().firestore
-  //         .collection('chats')
-  //         .doc(widget.chatId)
-  //         .collection('messages')
-  //         .doc(
-  //           message.id,
-  //         ) // Ensure your message.id matches the Firestore document ID
-  //         .update({'metadata': metadata});
-  //   } catch (e) {
-  //     print('Failed to update reaction: $e');
-  //     // Optional: Show a SnackBar to the user if the network request fails
-  //   }
-  // }
 
   Future<void> _toggleReaction(types.Message message, String emojiType) async {
     final currentUserId = widget.me.id;

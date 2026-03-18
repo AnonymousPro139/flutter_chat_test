@@ -6,6 +6,7 @@ import 'package:test_firebase/firebase/firestore/services/auth/index.dart';
 import 'package:test_firebase/firebase/firestore/services/user/index.dart';
 import 'package:test_firebase/models/user.dart';
 import 'package:test_firebase/riverpod/index.dart';
+import 'package:test_firebase/widgets/Dialog.dart';
 
 class SyncCodeScreen extends ConsumerStatefulWidget {
   final AppUser loggedUser;
@@ -50,10 +51,8 @@ class _SyncCodeScreenState extends ConsumerState<SyncCodeScreen> {
       setState(() => _isError = false);
       _createCode(pin);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Created sync code is successful. Don't forget it!"),
-        ),
+      context.showCustomSnackBar(
+        "Created sync code is successful. Don't forget it!",
       );
     } else {
       final idPubKey = await EncryptionService().createIdentityKeyPair(
@@ -80,8 +79,10 @@ class _SyncCodeScreenState extends ConsumerState<SyncCodeScreen> {
       } else {
         setState(() => _isError = true);
         _pinController.clear();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Invalid Sync Code. Please try again.")),
+
+        context.showCustomSnackBar(
+          "Invalid Sync Code. Please try again.",
+          isError: true,
         );
       }
     }

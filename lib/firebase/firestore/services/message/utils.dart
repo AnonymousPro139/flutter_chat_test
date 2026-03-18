@@ -246,6 +246,10 @@ class MessageUtils {
       // 3. Clean routing using a Switch statement instead of nested if/else
       final type = data['type'] ?? 'text';
 
+      Map<String, List<String>>? parsedReactions = reactionHandler(
+        data['reactions'],
+      );
+
       switch (type) {
         case 'image':
           final fpath = await fetchFileDecryptAndCreateTempFile(
@@ -264,6 +268,7 @@ class MessageUtils {
             source: fpath,
             // pinned: true,
             status: MessageStatus.sent,
+            reactions: parsedReactions,
           );
 
         case 'file':
@@ -275,6 +280,7 @@ class MessageUtils {
             size: data['size'] ?? 0,
             source: data['uri'] ?? '',
             status: MessageStatus.sent,
+            reactions: parsedReactions,
           );
         case 'system':
           return SystemMessage(
@@ -291,56 +297,6 @@ class MessageUtils {
             // Now await works perfectly!
             decryptedText = await ChaCha20().decrypt(data['text'], ssk);
           }
-
-          // 1. Safely extract metadata (handles the null error)
-          // final Map<String, dynamic>? metadata = data['reactions'] is Map
-          //     ? Map<String, dynamic>.from(data['reactions'])
-          //     : null;
-
-          // 2. Extract raw reactions using 'dynamic' so we don't assume the type yet
-          // (Change this to metadata?['reactions'] if you saved it inside metadata)
-          dynamic rawReactions = data['reactions'];
-
-          // 3. Safely parse based on the actual runtime type
-          Map<String, List<String>>? parsedReactions;
-
-          // final rawReactions =
-          //     data['metadata']['reactions'] as Map<String, dynamic>?;
-
-          // // 2. Create the correctly typed map
-          // Map<String, List<String>>? parsedReactions;
-
-          // if (rawReactions != null) {
-          //   parsedReactions = rawReactions.map((emojiKey, userIdsList) {
-          //     // Cast the dynamic list from Firestore into a strict List<String>
-          //     return MapEntry(
-          //       emojiKey,
-          //       List<String>.from(userIdsList as List<dynamic>),
-          //     );
-          //   });
-          // }
-
-          print('rawReactions: ${rawReactions}');
-
-          if (rawReactions is Map) {
-            print('Map shuuu');
-            // Scenario A: It's the NEW, correct Map format! Let's parse it safely.
-            parsedReactions = {};
-            rawReactions.forEach((key, value) {
-              if (value is List) {
-                // Force every item in the list to be a String
-                parsedReactions![key.toString()] = List<String>.from(
-                  value.map((e) => e.toString()),
-                );
-              }
-            });
-          } else if (rawReactions is List) {
-            // Scenario B: It's the OLD data from our previous attempts.
-            // We just return an empty map so the app doesn't crash on old messages.
-            parsedReactions = {};
-          }
-
-          print('parsedReactions: ${parsedReactions}');
 
           return TextMessage(
             id: doc.id,
@@ -522,5 +478,34 @@ class MessageUtils {
 
     if (imgExts.contains(ext)) return 'image';
     return 'file';
+  }
+
+  Map<String, List<String>> reactionHandler(dynamic rawReactions) {
+    if (rawReactions == null) {
+      return {};
+    }
+
+    Map<String, List<String>>? parsedReactions = {};
+
+    if (rawReactions is Map) {
+      // Scenario A: It's the NEW, correct Map format! Let's parse it safely.
+      // parsedReactions = {};
+      rawReactions.forEach((key, value) {
+        if (value is List) {
+          // Force every item in the list to be a String
+          parsedReactions![key.toString()] = List<String>.from(
+            value.map((e) => e.toString()),
+          );
+        }
+      });
+
+      return parsedReactions;
+    } else if (rawReactions is List) {
+      // Scenario B: It's the OLD data from our previous attempts.
+      // We just return an empty map so the app doesn't crash on old messages.
+      return parsedReactions;
+    } else {
+      return {};
+    }
   }
 }

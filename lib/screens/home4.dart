@@ -4,6 +4,7 @@ import 'package:test_firebase/firebase/firestore/services/group/index.dart';
 import 'package:test_firebase/models/user.dart';
 import 'package:test_firebase/riverpod/providers.dart';
 import 'package:test_firebase/widgets/ChatElement.dart';
+import 'package:test_firebase/widgets/Dialog.dart';
 
 class HomeScreen4 extends ConsumerWidget {
   final AppUser user;
@@ -65,8 +66,17 @@ class HomeScreen4 extends ConsumerWidget {
                       user.id,
                     );
 
-                    print("New created group id: ${createdId}");
-
+                    if (createdId != "") {
+                      context.showCustomSnackBar(
+                        "Please wait, We're creating your chat.",
+                      );
+                    } else {
+                      context.showCustomSnackBar(
+                        "Sorry, Something happened while creating chat.",
+                        isError: true,
+                      );
+                    }
+                    groupNameController.clear();
                     Navigator.pop(context);
                   },
                   child: const Text("Create Group"),

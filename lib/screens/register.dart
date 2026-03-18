@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:test_firebase/firebase/firestore/services/auth/index.dart';
+import 'package:test_firebase/widgets/Dialog.dart';
 
 class RegisterScreen extends ConsumerWidget {
   const RegisterScreen({super.key});
@@ -19,13 +20,12 @@ class RegisterScreen extends ConsumerWidget {
 
       Auth().register(phone, name, password).then((success) {
         if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Registration successful! Please log in.")),
-          );
+          context.showCustomSnackBar("Registration successful! Please log in");
           Navigator.pop(context); // Go back to login screen
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Registration failed. Please try again.")),
+          context.showCustomSnackBar(
+            "Registration failed. Please try again.",
+            isError: true,
           );
         }
       });
