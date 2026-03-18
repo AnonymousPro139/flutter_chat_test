@@ -18,3 +18,12 @@ flyer_chat_text_stream_message: Renders streamed text messages with markdown and
 flyer_chat_image_message: Renders image messages.
 flyer_chat_file_message: Renders file messages.
 flyer_chat_system_message: Renders system messages (e.g., user joined).
+
+ENIIG SHALGAJ UZEH!!!!!!
+
+// Can we build encrypt file without mac bytes maybe, avoiding size of encrypted file
+final encryptedData = <int>[
+...secretBox.nonce,
+...secretBox.mac.bytes,
+...secretBox.cipherText,
+];

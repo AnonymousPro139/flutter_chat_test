@@ -29,8 +29,9 @@ class MessageUtils {
 
       switch (type) {
         case 'image':
-          final fpath = await fetchFileDecryptAndCreateTempFile(
+          final fpath = await fetchFileDecryptAndCreateTempFile2(
             chatId: chatId,
+            senderId: data['senderId'],
             fileUrl: data["name"],
             ssk: ssk,
             uniqueId: doc.id,

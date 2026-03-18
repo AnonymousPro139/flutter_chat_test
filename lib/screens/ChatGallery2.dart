@@ -57,8 +57,18 @@ class ChatGalleryScreen2 extends StatelessWidget {
               // 1. Define the Future based on who the sender is
               // We do this OUTSIDE the FutureBuilder so it starts executing immediately.
 
-              final decryptionFuture = fetchFileDecryptAndCreateTempFile(
+              // final decryptionFuture = fetchFileDecryptAndCreateTempFile(
+              //   chatId: chatId,
+              //   fileUrl: data["name"],
+              //   ssk: data["senderId"] == me.id
+              //       ? sessionKeys.sending
+              //       : sessionKeys.receiving,
+              //   uniqueId: docs[index].id,
+              // );
+
+              final decryptionFuture = fetchFileDecryptAndCreateTempFile2(
                 chatId: chatId,
+                senderId: data["senderId"],
                 fileUrl: data["name"],
                 ssk: data["senderId"] == me.id
                     ? sessionKeys.sending

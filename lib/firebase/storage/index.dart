@@ -104,6 +104,35 @@ class FbStorage {
     }
   }
 
+  Future<String> uploadImage3({
+    required String chatId,
+    required String senderId,
+    required Uint8List encryptedBytes,
+    required String fname,
+  }) async {
+    try {
+      // 3. Create the Firebase Storage reference
+      // We store it in a subfolder named after the chatId to keep things organized
+      Reference storageRef = fbStorage
+          .ref()
+          .child('chat_media')
+          .child(chatId)
+          .child(senderId)
+          .child(fname);
+
+      // Use putData instead of putFile
+      final uploadTask = await storageRef.putData(encryptedBytes);
+      final downloadUrl = await uploadTask.ref.getDownloadURL();
+
+      return downloadUrl;
+    } catch (e) {
+      // 7. Handle any errors (connection issues, permission denied, etc.)
+      debugPrint('Upload failed: $e');
+      return "";
+      // Optional: Show a SnackBar to the user here
+    }
+  }
+
   Future<Uint8List> fetchEncryptedFileData({
     required String chatId,
     required String fname,
@@ -112,6 +141,24 @@ class FbStorage {
         .ref()
         .child('chat_media')
         .child(chatId)
+        .child(fname);
+
+    //Note: getData() takes a max size limit. 10MB
+    final Uint8List? bytes = await storageRef.getData(maxFileSize);
+
+    return bytes!;
+  }
+
+  Future<Uint8List> fetchEncryptedFileData2({
+    required String chatId,
+    required String senderId,
+    required String fname,
+  }) async {
+    Reference storageRef = FbStorage().fbStorage
+        .ref()
+        .child('chat_media')
+        .child(chatId)
+        .child(senderId)
         .child(fname);
 
     //Note: getData() takes a max size limit. 10MB

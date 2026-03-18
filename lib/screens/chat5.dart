@@ -277,6 +277,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
   @override
   Widget build(BuildContext context) {
     // 1. Guard clause: If keys are not ready, show a loading screen.
+
+    // Shine hereglegch OTP hiisen c synccode-r oroogui bh ued ene ergeed l bgad bga!
     if (_sessionKeys == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -757,10 +759,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
             "${LocalStorageService().getSimpleRandom()}_${result.files.single.name}";
       }
 
-      String downloadUrl = await FbStorage().uploadImage2(
-        widget.chatId,
-        bytes,
-        fname,
+      String downloadUrl = await FbStorage().uploadImage3(
+        chatId: widget.chatId,
+        senderId: widget.me.id,
+        encryptedBytes: bytes,
+        fname: fname,
       );
 
       if (downloadUrl != '') {

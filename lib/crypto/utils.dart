@@ -58,3 +58,40 @@ Future<String> fetchFileDecryptAndCreateTempFile({
     return isExistTemp;
   }
 }
+
+Future<String> fetchFileDecryptAndCreateTempFile2({
+  required String chatId,
+  required String senderId,
+
+  required String fileUrl,
+  required String ssk,
+  required String uniqueId,
+}) async {
+  final String isExistTemp = await LocalStorageService().isExistTemporaryFile(
+    fname: uniqueId,
+    ext: LocalStorageService().getExtension(fileUrl),
+  );
+
+  if (isExistTemp == '') {
+    final Uint8List bytes = await FbStorage().fetchEncryptedFileData2(
+      chatId: chatId,
+      senderId: senderId,
+      fname: fileUrl,
+    );
+
+    final Uint8List decryptedBytes = await ChaCha20().decryptFile(
+      encryptedBytes: bytes,
+      key: ssk,
+    );
+
+    final fpath = await LocalStorageService().createTemporaryFile(
+      decryptedBytes: decryptedBytes,
+      fname: uniqueId,
+      ext: LocalStorageService().getExtension(fileUrl),
+    );
+
+    return fpath;
+  } else {
+    return isExistTemp;
+  }
+}
