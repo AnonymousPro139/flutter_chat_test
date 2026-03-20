@@ -38,6 +38,24 @@ class LocalStorageService {
     return tempFile.path;
   }
 
+  Future<void> deleteTemporaryFile(String filePath) async {
+    try {
+      // 1. Create a File reference using the path returned by your creation function
+      final file = File(filePath);
+
+      // 2. Check if the file actually exists before trying to delete it
+      if (await file.exists()) {
+        await file.delete();
+        print('Temporary file successfully deleted.');
+      } else {
+        print('File not found. It may have already been deleted.');
+      }
+    } catch (e) {
+      // 3. Catch any file system errors (e.g., permission issues)
+      print('Error deleting temporary file: $e');
+    }
+  }
+
   Future<String> isExistTemporaryFile({
     required String fname,
     required String ext,

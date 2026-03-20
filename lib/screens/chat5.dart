@@ -277,7 +277,6 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
   @override
   Widget build(BuildContext context) {
     // 1. Guard clause: If keys are not ready, show a loading screen.
-
     // Shine hereglegch OTP hiisen c synccode-r oroogui bh ued ene ergeed l bgad bga!
     if (_sessionKeys == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -639,22 +638,80 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
     required details,
     required int index,
   }) async {
-    final selectedEmoji = await showReactionsDialog(context);
-
-    // 3. If the user tapped outside the sheet or didn't pick anything, stop here.
-    if (selectedEmoji == null) return;
-
-    // 4. Apply the selected emoji to the message
-    _toggleReaction(message, selectedEmoji);
-
-    // MyDialogs().showSnackBar(
-    //   context,
-    //   "Please wait, You're reacted ${selectedEmoji} with this message.",
-    // );
-
-    context.showCustomSnackBar(
-      "Please wait, You're reacted ${selectedEmoji} with this message!",
+    final action = await showReactionsAndActionsDialog(
+      context,
+      isShowUnsend: widget.me.id == message.authorId,
     );
+
+    if (action == null) return;
+
+    switch (action) {
+      case 'action_reply':
+        break;
+
+      case 'action_delete':
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text("Unsend and delete this message?"),
+            content: const Text("You can't restore this message again."),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Cancel"),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                onPressed: () async {
+                  if (message is types.TextMessage) {
+                    await FbStorage().deleteMessage(
+                      chatId: widget.chatId,
+                      messageId: message.id,
+                      fileUrl: null,
+                    );
+
+                    context.showCustomSnackBar(
+                      "The message deleted successfully.",
+                    );
+                    Navigator.pop(context);
+                  } else {
+                    if (message is types.ImageMessage) {
+                      await LocalStorageService().deleteTemporaryFile(
+                        message.source,
+                      );
+
+                      await FbStorage().deleteMessage(
+                        chatId: widget.chatId,
+                        messageId: message.id,
+                        fileUrl: message.text,
+                      );
+
+                      context.showCustomSnackBar(
+                        "The file deleted successfully.",
+                      );
+                      Navigator.pop(context);
+                    }
+                  }
+                },
+                child: const Text(
+                  "Unsend",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+        );
+
+        break;
+
+      default:
+        _toggleReaction(message, action);
+
+        context.showCustomSnackBar(
+          "Please wait, you reacted $action to this message!",
+        );
+        break;
+    }
   }
 
   Future<void> _toggleReaction(types.Message message, String emojiType) async {

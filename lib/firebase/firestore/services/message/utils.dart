@@ -10,23 +10,37 @@ class MessageUtils {
     String ssk,
     String chatId,
   ) async {
-    try {
-      final data =
-          doc.data() ?? {}; // Default to empty map to avoid null errors
+    final data = doc.data() ?? {}; // Default to empty map to avoid null errors
 
-      final createdAt = data['createdAt'] is Timestamp
-          ? (data['createdAt'] as Timestamp).toDate()
-          : (data['createdAt'] is String
-                ? DateTime.parse(data['createdAt']).toUtc()
-                : DateTime.fromMillisecondsSinceEpoch(0, isUtc: true));
+    final createdAt = data['createdAt'] is Timestamp
+        ? (data['createdAt'] as Timestamp).toDate()
+        : (data['createdAt'] is String
+              ? DateTime.parse(data['createdAt']).toUtc()
+              : DateTime.fromMillisecondsSinceEpoch(0, isUtc: true));
 
-      // 3. Clean routing using a Switch statement instead of nested if/else
-      final type = data['type'] ?? 'text';
-
-      Map<String, List<String>>? parsedReactions = reactionHandler(
-        data['reactions'],
+    if (data['isDeleted'] == true) {
+      return TextMessage(
+        id: doc.id,
+        authorId: data['senderId'],
+        createdAt: createdAt,
+        text: 'Deleted',
+        status: MessageStatus.error,
+        deletedAt: data['updatedAt'] is Timestamp
+            ? (data['updatedAt'] as Timestamp).toDate()
+            : (data['updatedAt'] is String
+                  ? DateTime.parse(data['updatedAt']).toUtc()
+                  : DateTime.fromMillisecondsSinceEpoch(0, isUtc: true)),
       );
+    }
 
+    // 3. Clean routing using a Switch statement instead of nested if/else
+    final type = data['type'] ?? 'text';
+
+    Map<String, List<String>>? parsedReactions = reactionHandler(
+      data['reactions'],
+    );
+
+    try {
       switch (type) {
         case 'image':
           final fpath = await fetchFileDecryptAndCreateTempFile2(
@@ -42,6 +56,7 @@ class MessageUtils {
             authorId: data['senderId'],
             createdAt: createdAt,
             source: fpath,
+            text: data["uri"], // daraa n ustgahad ene uri n hereg bolno
             status: MessageStatus.sent,
             reactions: parsedReactions,
           );
@@ -86,7 +101,7 @@ class MessageUtils {
             id: doc.id,
             authorId: data['senderId'],
             createdAt: createdAt,
-            text: "Unknown! shuu", // Use the awaited decrypted text here!
+            text: "Unknown type message shuu",
             replyToMessageId: data['replyToMessageId'],
             status: MessageStatus.sent,
           );
@@ -96,10 +111,11 @@ class MessageUtils {
 
       return TextMessage(
         id: doc.id,
-        authorId: "error_user",
-        createdAt: null,
-        text: 'Error decrypting message',
+        authorId: data['senderId'],
+        createdAt: createdAt,
+        text: 'Something wrong',
         status: MessageStatus.error,
+        deletedAt: DateTime.now(),
       );
     }
   }

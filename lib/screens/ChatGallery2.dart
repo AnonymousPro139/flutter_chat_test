@@ -32,13 +32,14 @@ class ChatGalleryScreen2 extends StatelessWidget {
             .collection('messages')
             .where('type', whereIn: ['image', 'file'])
             .orderBy('createdAt', descending: false)
+            .limit(15)
             .snapshots(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final docs = snapshot.data!.docs;
+          final docs = snapshot.data!.docs; // beofre
 
           if (docs.isEmpty) return const Center(child: Text("No media found"));
 
@@ -52,29 +53,22 @@ class ChatGalleryScreen2 extends StatelessWidget {
             itemCount: docs.length,
             itemBuilder: (context, index) {
               final data = docs[index].data() as Map<String, dynamic>;
+
               final isImage = data['type'] == 'image';
 
-              // 1. Define the Future based on who the sender is
-              // We do this OUTSIDE the FutureBuilder so it starts executing immediately.
+              Future<String>? decryptionFuture = null;
 
-              // final decryptionFuture = fetchFileDecryptAndCreateTempFile(
-              //   chatId: chatId,
-              //   fileUrl: data["name"],
-              //   ssk: data["senderId"] == me.id
-              //       ? sessionKeys.sending
-              //       : sessionKeys.receiving,
-              //   uniqueId: docs[index].id,
-              // );
-
-              final decryptionFuture = fetchFileDecryptAndCreateTempFile2(
-                chatId: chatId,
-                senderId: data["senderId"],
-                fileUrl: data["name"],
-                ssk: data["senderId"] == me.id
-                    ? sessionKeys.sending
-                    : sessionKeys.receiving,
-                uniqueId: docs[index].id,
-              );
+              if (data['text'] != 'Deleted') {
+                decryptionFuture = fetchFileDecryptAndCreateTempFile2(
+                  chatId: chatId,
+                  senderId: data["senderId"],
+                  fileUrl: data["name"],
+                  ssk: data["senderId"] == me.id
+                      ? sessionKeys.sending
+                      : sessionKeys.receiving,
+                  uniqueId: docs[index].id,
+                );
+              }
 
               return FutureBuilder<String>(
                 future: decryptionFuture,
@@ -119,9 +113,6 @@ class ChatGalleryScreen2 extends StatelessWidget {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(8),
                       child: isImage
-                          // NOTE: If decryptedFilePath is a local file path, you'll need
-                          // Image.file(File(decryptedFilePath)) instead of Image.network()
-                          // Image.network(data['uri'], fit: BoxFit.cover)
                           ? Image.file(File(decryptedFilePath))
                           : Container(
                               color: Colors.grey[200],
