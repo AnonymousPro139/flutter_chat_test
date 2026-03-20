@@ -17,13 +17,17 @@ class ChatElement extends StatelessWidget {
     required this.idPubKey,
     required this.epPubKey,
     required this.spPubKey,
+    required this.unreadCount,
+    required this.isGroup,
   });
 
   final AppUser me;
+  final bool isGroup;
   final String chatId;
   final String title;
   final String lastMessage;
   final dynamic lastMessageAt;
+  final int unreadCount;
 
   final String idPubKey;
   final String epPubKey;
@@ -115,7 +119,11 @@ class ChatElement extends StatelessWidget {
         backgroundImage: null,
         child: title.isNotEmpty ? Text(title.toUpperCase()) : null,
       ),
-      title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
+      title: Text(
+        '${title} - unread: $unreadCount ${isGroup}',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
       subtitle: Text(
         lastMessage.isEmpty ? 'No messages yet' : lastMessage,
         maxLines: 1,
@@ -133,6 +141,7 @@ class ChatElement extends StatelessWidget {
             builder: (_) => ChatScreen5(
               me: me,
               title: title,
+              isGroup: isGroup,
               chatId: chatId,
               idPubKey: idPubKey,
               epPubKey: epPubKey,

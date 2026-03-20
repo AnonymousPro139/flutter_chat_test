@@ -12,9 +12,15 @@ class UserFirestoreService extends FirestoreService {
 
     if (snapshot.docs.isNotEmpty) {
       final user = snapshot.docs.first.data();
+
+      print('SEARCH: ${user['idPubKey']}');
+
       return AppUser(
         id: snapshot.docs.first.id,
         phone: user['phone'],
+        idPubKey: user['idPubKey'],
+        epPubKey: user['epPubKey'],
+        spPubKey: user['spPubKey'],
         isVerifiedBySyncCode: false,
       );
     } else {

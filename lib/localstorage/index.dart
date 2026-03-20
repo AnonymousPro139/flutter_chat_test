@@ -93,8 +93,8 @@ class LocalStorageService {
     return p.basenameWithoutExtension(filename);
   }
 
-  String getSimpleRandom() {
-    int rnd = Random().nextInt(9000) + 1000;
+  String getSimpleRandom({int len = 4}) {
+    int rnd = Random().nextInt(len * 10000) + 10000;
 
     return '$rnd';
   }

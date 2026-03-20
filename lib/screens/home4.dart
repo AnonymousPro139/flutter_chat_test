@@ -170,6 +170,8 @@ class HomeScreen4 extends ConsumerWidget {
                 idPubKey: data["idPubKey"] ?? '',
                 epPubKey: data["epPubKey"] ?? '',
                 spPubKey: data["spPubKey"] ?? '',
+                unreadCount: data["unreadCount"] ?? 0,
+                isGroup: !data["isDM"],
               );
             },
           );

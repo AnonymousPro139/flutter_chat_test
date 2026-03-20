@@ -66,32 +66,32 @@ class _GlobalSearchScreenState extends ConsumerState<GlobalSearchScreen> {
 
   // Mock function to simulate a database/Firebase search
   void _performSearch(String query) async {
-    if (query.isEmpty) {
-      setState(() {
-        _searchResults = [];
-        _isSearching = false;
-      });
-      return;
-    }
+    // if (query.isEmpty) {
+    //   setState(() {
+    //     _searchResults = [];
+    //     _isSearching = false;
+    //   });
+    //   return;
+    // }
 
-    setState(() => _isSearching = true);
+    // setState(() => _isSearching = true);
 
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 500));
+    // // Simulate network delay
+    // await Future.delayed(const Duration(milliseconds: 500));
 
-    // Dummy data for demonstration
-    final mockUsers = [
-      AppUser(id: '101', phone: '+123456', isVerifiedBySyncCode: false),
-      AppUser(id: '102', phone: '+987654', isVerifiedBySyncCode: false),
-      AppUser(id: '103', phone: '+555444', isVerifiedBySyncCode: false),
-    ];
+    // // Dummy data for demonstration
+    // final mockUsers = [
+    //   AppUser(id: '101', phone: '+123456', isVerifiedBySyncCode: false),
+    //   AppUser(id: '102', phone: '+987654', isVerifiedBySyncCode: false),
+    //   AppUser(id: '103', phone: '+555444', isVerifiedBySyncCode: false),
+    // ];
 
-    setState(() {
-      _searchResults = mockUsers
-          .where((u) => u.phone.contains(query.toLowerCase()))
-          .toList();
-      _isSearching = false;
-    });
+    // setState(() {
+    //   _searchResults = mockUsers
+    //       .where((u) => u.phone.contains(query.toLowerCase()))
+    //       .toList();
+    //   _isSearching = false;
+    // });
   }
 
   void search() async {
@@ -295,16 +295,22 @@ class _GlobalSearchScreenState extends ConsumerState<GlobalSearchScreen> {
             resultUser!.id,
           );
 
-          // Navigator.push(
-          //   context,
-          //   MaterialPageRoute(
-          //     builder: (context) => ChatScreen5(
-          //       chatId: createdChatId,
-          //       title: 'Chat',
-          //       user: loggedUser,
-          //     ),
-          //   ),
-          // );
+          print('result::: ${resultUser!.idPubKey}');
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ChatScreen5(
+                chatId: createdChatId,
+                title: 'Chat',
+                me: loggedUser,
+                isGroup: false,
+                idPubKey: resultUser.idPubKey,
+                epPubKey: resultUser.epPubKey,
+                spPubKey: resultUser.spPubKey,
+              ),
+            ),
+          );
         },
         child: const Text("Message"),
       ),

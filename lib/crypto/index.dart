@@ -124,12 +124,19 @@ class EncryptionService {
     return SimplePublicKey(keyBytes, type: KeyPairType.x25519);
   }
 
-  // Future<SecretKeyData> derivedKey(SecretKey sharedSecretKey) async {
-  //   return await hkdf.deriveKey(
-  //     secretKey: sharedSecretKey,
-  //     nonce: utf8.encode("system"), // Optional but recommended
-  //   );
-  // }
+  String decodeBase64ToString(String base64String) {
+    try {
+      // 1. Decode the Base64 string into a list of raw bytes
+      List<int> decodedBytes = base64Decode(base64String);
+
+      // 2. Decode the raw bytes into a readable UTF-8 string
+      return utf8.decode(decodedBytes);
+    } catch (e) {
+      // 3. Catch errors (e.g., if the string isn't actually valid base64)
+      print('Error decoding Base64: $e');
+      return '';
+    }
+  }
 
   Future<SecretKeyData> derivedKey(String input) async {
     // 1. Convert the plain text string into UTF-8 bytes
@@ -220,5 +227,21 @@ class EncryptionService {
 
     // Rebuild the SecretKey object
     return SecretKey(keyBytes);
+  }
+
+  Future<String> calcMasterKeyGroup({
+    required String otherIdKey,
+    required String otherSPKey,
+    required String otherEphKey,
+  }) async {
+    final a1 = await derivedKey(otherIdKey);
+    final a2 = await derivedKey(otherSPKey);
+    final a3 = await derivedKey(otherEphKey);
+
+    final k1 = await secretKeyToHex(a1);
+    final k2 = await secretKeyToHex(a2);
+    final k3 = await secretKeyToHex(a3);
+
+    return k1 + k2 + k3;
   }
 }

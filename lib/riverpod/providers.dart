@@ -77,6 +77,9 @@ final friendsProvider = StreamProvider.family<List<AppUser>, String>((
             id: doc.id,
             phone: data['phone'] ?? 'User',
             isVerifiedBySyncCode: false,
+            epPubKey: data['epPubKey'] ?? '',
+            idPubKey: data['idPubKey'] ?? '',
+            spPubKey: data['spPubKey'] ?? '',
           );
         }).toList(),
       );
@@ -116,6 +119,9 @@ final participantProfilesProvider =
               id: doc.id,
               phone: doc.data()['phone'] ?? 'User',
               isVerifiedBySyncCode: false,
+              epPubKey: doc.data()['epPubKey'] ?? '',
+              idPubKey: doc.data()['idPubKey'] ?? '',
+              spPubKey: doc.data()['spPubKey'] ?? '',
             ),
           )
           .toList();

@@ -20,6 +20,9 @@ class AuthController extends Notifier<AsyncValue<AppUser?>> {
           id: user['id'],
           phone: user['phone'],
           isVerifiedBySyncCode: false,
+          epPubKey: '',
+          idPubKey: '',
+          spPubKey: '',
         );
       }
     });
@@ -36,6 +39,9 @@ class AuthController extends Notifier<AsyncValue<AppUser?>> {
           id: user['id'],
           phone: user['phone'],
           isVerifiedBySyncCode: false,
+          epPubKey: '',
+          idPubKey: '',
+          spPubKey: '',
         );
       }
     });
@@ -49,6 +55,9 @@ class AuthController extends Notifier<AsyncValue<AppUser?>> {
         id: loggedUser.id,
         phone: loggedUser.phone,
         isVerifiedBySyncCode: true,
+        epPubKey: '',
+        idPubKey: '',
+        spPubKey: '',
       );
     });
   }

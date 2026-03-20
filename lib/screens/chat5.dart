@@ -27,6 +27,7 @@ import 'package:test_firebase/models/user.dart';
 
 class ChatScreen5 extends ConsumerStatefulWidget {
   final AppUser me;
+  final bool isGroup;
   final String chatId;
   final String title;
   final String idPubKey;
@@ -36,6 +37,7 @@ class ChatScreen5 extends ConsumerStatefulWidget {
   const ChatScreen5({
     super.key,
     required this.me,
+    required this.isGroup,
     required this.chatId,
     required this.title,
 
@@ -85,6 +87,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen5> {
 
     final keys = await manager.getSharedSecretKeys(
       chatId: widget.chatId,
+      isGroup: widget.isGroup,
       otherIdPubKey: widget.idPubKey,
       otherEphPubKey: widget.epPubKey,
       otherSPpubKey: widget.spPubKey,
