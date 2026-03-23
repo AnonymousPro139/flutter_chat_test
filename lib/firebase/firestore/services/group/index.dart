@@ -18,6 +18,13 @@ Future<String> createGroupChat(String title, createdUserId) async {
       '${LocalStorageService().getSimpleRandom()}-$title}',
     );
 
+    print('docRef.id: ${docRef.id}');
+    print('generate: ${LocalStorageService().getSimpleRandom(len: 6)}');
+
+    print('idKey: ${idKey}');
+    print('spreKey: ${spreKey}');
+    print('ephKey: ${ephKey}');
+
     await docRef.set({
       'id': docRef.id, // This is your automatic ID
       'title': title,

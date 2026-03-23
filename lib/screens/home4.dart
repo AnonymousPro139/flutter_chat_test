@@ -61,23 +61,50 @@ class HomeScreen4 extends ConsumerWidget {
                     ),
                   ),
                   onPressed: () async {
-                    var createdId = await createGroupChat(
-                      groupNameController.text,
-                      user.id,
-                    );
-
-                    if (createdId != "") {
-                      context.showCustomSnackBar(
-                        "Please wait, We're creating your chat.",
-                      );
-                    } else {
-                      context.showCustomSnackBar(
-                        "Sorry, Something happened while creating chat.",
-                        isError: true,
-                      );
-                    }
-                    groupNameController.clear();
                     Navigator.pop(context);
+
+                    return showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text("Create new group"),
+                        content: Text(
+                          "Do you want to create '${groupNameController.text}' group chat?",
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text("Cancel"),
+                          ),
+                          TextButton(
+                            onPressed: () async {
+                              var createdId = await createGroupChat(
+                                groupNameController.text,
+                                user.id,
+                              );
+
+                              Navigator.pop(context);
+
+                              if (createdId != "") {
+                                context.showCustomSnackBar(
+                                  "Please wait, We're creating your chat.",
+                                );
+                              } else {
+                                context.showCustomSnackBar(
+                                  "Sorry, Something happened while creating chat.",
+                                  isError: true,
+                                );
+                              }
+                              groupNameController.clear();
+                              // Navigator.pop(context);
+                            },
+                            child: const Text(
+                              "Create",
+                              style: TextStyle(color: Colors.red),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
                   },
                   child: const Text("Create Group"),
                 ),
