@@ -31,31 +31,3 @@ class AuthGate extends ConsumerWidget {
     );
   }
 }
-
-// class AuthGate extends ConsumerWidget {
-//   const AuthGate({super.key});
-
-//   @override
-//   Widget build(BuildContext context, WidgetRef ref) {
-//     return StreamBuilder<User?>(
-//       stream: FirebaseAuth.instance.authStateChanges(),
-//       builder: (context, snapshot) {
-//         // 1. While waiting for the initial connection to Firebase Auth
-//         if (snapshot.connectionState == ConnectionState.waiting) {
-//           return const Scaffold(
-//             body: Center(child: CircularProgressIndicator()),
-//           );
-//         }
-
-//         // 2. If the user is logged in (snapshot has user data)
-//         if (snapshot.hasData) {
-//           print('---------------- Nevtersen hereglegch bna');
-//           return const BottomScreen();
-//         }
-
-//         // 3. If the user is NOT logged in
-//         return const LoginScreen();
-//       },
-//     );
-//   }
-// }
