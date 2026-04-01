@@ -14,20 +14,4 @@ class AppUser {
     required this.spPubKey,
     required this.isVerifiedBySyncCode,
   });
-
-  static AppUser fromMap(
-    Map<String, dynamic> user, {
-    bool isVerifiedBySyncCode = false,
-  }) {
-    return AppUser(
-      id: user['id'] ?? '',
-      phone: user['phone'] ?? '',
-      idPubKey: user['idPubKey'] ?? '',
-      epPubKey: user['epPubKey'] ?? '',
-      spPubKey: user['spPubKey'] ?? '',
-      isVerifiedBySyncCode: isVerifiedBySyncCode,
-    );
-  }
-
-  void operator [](String other) {}
 }

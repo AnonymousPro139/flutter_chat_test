@@ -170,9 +170,6 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
 
-      // Common cases:
-      // - invalid-verification-code
-      // - session-expired
       setState(() {
         _errorText = e.message ?? 'Verification failed. Please try again.';
       });
